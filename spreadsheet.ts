@@ -908,8 +908,9 @@ class Spreadsheet extends SplitPanel {
     for (var i = 0; i < this.getWidth(); i++) {
       newVals.push([]);
     }
-    for (var i = 0; i < newVals.length; i++) {
+    for (var i = 0; i < this.getHeight(); i++) {
       for (var j = 0; j < this.getWidth(); j++) {
+        console.log(j + " " + i);
         newVals[j][i] = this.getCellVal(j, nums[i]);
       }
     }
