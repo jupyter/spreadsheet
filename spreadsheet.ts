@@ -220,25 +220,41 @@ class SelectionManager {
               manager.mouseSelectRange(cell);
             }
           }
-
           if (typeof label !== 'undefined') {
-            if (e.shiftKey) {/*
-              if (label.isColumn) {
-                for (var i = Math.min(label.getNum(), manager.focusedCell.getX()) - 1; 
-                  i < Math.max(Math.min(label.getNum(), manager.focusedCell.getX()));
+            if (e.shiftKey) {
+              if (label.isColumn()) {/*
+                if (label.getNum > manager.focusedCell.getX()) {
+
+                }*/
+                  console.log("isCol");
+                manager.minX = manager.focusedCell.getX();
+                manager.maxX = manager.focusedCell.getX();
+                for (var i = Math.min(label.getNum(), manager.focusedCell.getX()); 
+                  i < Math.max(label.getNum(), manager.focusedCell.getX()) + 1;
                   i++) {
                   manager.selectCol(i);
                 }
-              }*/
+              }
+              else {
+                manager.minY = manager.focusedCell.getY();
+                manager.maxY = manager.focusedCell.getY();
+                for (var i = Math.min(label.getNum(), manager.focusedCell.getY()); 
+                  i < Math.max(label.getNum(), manager.focusedCell.getY()) + 1;
+                  i++) {
+                  manager.selectRow(i);
+                }
+              }
             }
             else {
               manager.removeFocus();
               manager.clearSelections();
               if (label.isColumn()) {
-                manager.selectCol(label.getNum() - 1);
+                manager.focusCell(sheet.getCell(label.getNum() - 1, 0));
+                manager.selectCol(label.getNum());
               }
               else {
-                manager.selectRow(label.getNum() - 1);
+                manager.focusCell(sheet.getCell(0, label.getNum() - 1));
+                manager.selectRow(label.getNum());
               }
             }
           }
@@ -611,7 +627,6 @@ class SelectionManager {
 
   removeFocus() {
     if (typeof this.focusedCell !== 'undefined') {
-      console.log("remove focus");
       this.focusedCell.removeDivClass('focused');
     }
   }
@@ -649,28 +664,27 @@ class SelectionManager {
   }
 
   selectRow(rowNum: number) {
-    for (var i = 0; i < this.sheet.getWidth(); i++) {
-      this.select(this.sheet.getCell(i, rowNum));
-    }
-    this.sheet.getCell(0, rowNum).focus();
-    this.focusedCell = this.sheet.getCell(0, rowNum);
+    /*this.sheet.getCell(0, rowNum).focus();
+    this.focusedCell = this.sheet.getCell(0, rowNum);*/
     this.minX = 1;
     this.maxX = this.sheet.getWidth();
-    this.minY = rowNum;
-    this.maxY = rowNum;
+    this.minY = Math.min(rowNum, this.minY);
+    this.maxY = Math.max(rowNum, this.maxY);
+    this.selectArea();
   }
 
   selectCol(colNum: number) {
     if (colNum >= 0) {
-      for (var i = 0; i < this.sheet.getHeight(); i++) {
+      /*for (var i = 0; i < this.sheet.getHeight(); i++) {
         this.select(this.sheet.getCell(colNum, i));
       }
       this.sheet.getCell(colNum, 0).focus();
-      this.focusedCell = this.sheet.getCell(colNum, 0);
+      this.focusedCell = this.sheet.getCell(colNum, 0);*/
       this.minY = 1;
       this.maxY = this.sheet.getHeight();
-      this.minX = colNum;
-      this.maxX = colNum;
+      this.minX = Math.min(colNum, this.minX);
+      this.maxX = Math.max(colNum, this.maxX);
+      this.selectArea();
     }
   }
 
