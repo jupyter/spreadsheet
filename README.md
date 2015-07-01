@@ -1,12 +1,16 @@
 # spreadsheet
 A spreadsheet component for phosphor
 
-Run Instructions
-----------------
-Build Phosphor either in the spreadsheet directory, or in a seperate directory on the same level as the spreadsheet directory.
+Installation
+------------
 ```bash
+git clone https://github.com/jupyter/spreadsheet.git
+cd spreadsheet
+npm install
+tsd reinstall -so
 gulp
 ```
+Build Phosphor either in the spreadsheet directory, or in a seperate directory on the same level as the spreadsheet directory.
 
 Open the spreadsheet.html file.
 
