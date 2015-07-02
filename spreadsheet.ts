@@ -29,11 +29,24 @@ function is(type : string, obj : Object) {
     return obj !== undefined && obj !== null && clas === type;
 }
 
+class MutableNumber {
+  private _num: number;
+  constructor(num: number) {
+    this._num = num;
+  }
+  get num(): number {
+    return this._num;
+  }
+  set num(newVal: number) {
+    this._num = newVal;
+  }
+}
+
 class Label extends Widget {
   private _div: JQuery;
   private _isCol: boolean;
-  private _num: number;
-  constructor(isCol: boolean, num: number) {
+  private _num: MutableNumber;
+  constructor(isCol: boolean, num: MutableNumber) {
     super();
     this._div = $('<div/>').attr('contenteditable', 'false');
     this._num = num;
@@ -49,40 +62,18 @@ class Label extends Widget {
     this.horizontalSizePolicy = SizePolicy.MinimumExpanding;
   }
 
-  rowInserted() {
-    if (!this._isCol) {
-      this._num++;
-      this.updateText();
-    }
-  }
-  colInserted() {
-    if (this._isCol) {
-      this._num++;
-      this.updateText();
-    }
-  }
-  rowDeleted() {
-    if (!this._isCol) {
-      this._num--;
-      this.updateText();
-    }
-  }
-  colDeleted() {
-    if (this._isCol) {
-      this._num--;
-      this.updateText();
-    }
-  }
-
   get column(): boolean {
     return this._isCol;
   }
   get num(): number {
-    return this._num;
+    if (this._num == null) {
+      return 0;
+    }
+    return this._num.num;
   }
 
   updateText() {
-    var num = this._num;
+    var num = this.num;
     this._div.text("");
     if (!this._isCol) {
       this._div.text(num);
@@ -98,12 +89,12 @@ class Label extends Widget {
 }
 
 class Cell extends Widget {
-  private _cellx : number;
-  private _celly : number;
+  private _cellx : MutableNumber;
+  private _celly : MutableNumber;
   private _sheet : Spreadsheet;
   private _div : JQuery;
 
-  constructor(parent : Spreadsheet, x : number, y : number) {
+  constructor(parent : Spreadsheet, x : MutableNumber, y : MutableNumber) {
     super();
     this._cellx = x;
     this._celly = y;
@@ -146,15 +137,15 @@ class Cell extends Widget {
   }
 
   updateView() {
-    this._div.text(this._sheet.cellVal[this._cellx - 1][this._celly - 1]);
+    this._div.text(this._sheet.cellVal[this.cellX - 1][this.cellY - 1]);
   }
   pushBack() {
-    this._sheet.cellVal[this._cellx - 1][this._celly - 1] = this._div.text();
+    this._sheet.cellVal[this.cellX - 1][this.cellY - 1] = this._div.text();
     this._div.attr('contenteditable', 'false');
     this._sheet.selector.endEdits();
   }
   equals(other : Cell): boolean {
-    return this._cellx == other._cellx && this._celly == other._celly;
+    return this.cellX == other.cellX && this.cellY == other.cellY;
   }
 
   get text() : string {
@@ -173,16 +164,10 @@ class Cell extends Widget {
   }
 
   get cellX(): number {
-    return this._cellx;
+    return this._cellx.num;
   }
   get cellY(): number {
-    return this._celly;
-  }
-  set cellX(newX: number) {
-    this._cellx = newX;
-  }
-  set cellY(newY: number) {
-    this._celly = newY;
+    return this._celly.num;
   }
 }
 
@@ -463,70 +448,61 @@ class SelectionManager {
   }
 
   insertRow(rowNum: number) {
+    this.sheet.insertRow(rowNum);
     for (var i = 0; i < this.sheet.label.length; i++) {
       if (this.sheet.label[i].num >= rowNum) {
-        this.sheet.label[i].rowInserted();
+        this.sheet.label[i].updateText();
       }
     }
 
-    this.sheet.insertRow(rowNum);
     this.removeFocus();
     this.clearSelections();
-    this.selectRow(rowNum - 1);
+    this.focusCell(this.sheet.cell[0][rowNum - 1]);
+    this.selectRow(rowNum);
   }
 
   insertCol(colNum: number) {
+    this.sheet.insertCol(colNum);
     for (var i = 0; i < this.sheet.label.length; i++) {
       if (this.sheet.label[i].num >= colNum) {
-        this.sheet.label[i].colInserted();
+        this.sheet.label[i].updateText();
       }
     }
-    this.sheet.insertCol(colNum);
 
     this.removeFocus();
     this.clearSelections();
-    this.selectCol(colNum - 1);
+    this.focusCell(this.sheet.cell[colNum - 1][0]);
+    this.selectCol(colNum);
   }
 
   deleteRow(rowNum : number) {
-    for (var i = 0; i < this.sheet.label.length; i++) {
-      if (this.sheet.label[i].num == rowNum && !this.sheet.label[i].column) {
-        this.sheet.delLabel(i--);
-      }
-      else if (this.sheet.label[i].num > rowNum) {
-        this.sheet.label[i].rowDeleted();
-      }
-    }
     this.sheet.deleteRow(rowNum);
+
     console.log(this.focusedCell);
     this.removeFocus();
     this.clearSelections();
+    this.focusCell(this.sheet.cell[0][rowNum - 1]);
     if (this.sheet.cheight < rowNum) {
-      this.selectRow(rowNum - 2);
+      this.selectRow(rowNum - 1);
     }
     else {
-      this.selectRow(rowNum - 1);
+      this.selectRow(rowNum);
     }
 
   }
 
   deleteCol(colNum : number) {
-    for (var i = 0; i < this.sheet.label.length; i++) {
-      if (this.sheet.label[i].num == colNum && this.sheet.label[i].column) {
-        this.sheet.delLabel(i--);
-      }
-      else if (this.sheet.label[i].num > colNum) {
-        this.sheet.label[i].colDeleted();
-      }
-    }
+
     this.sheet.deleteCol(colNum);
     this.removeFocus();
     this.clearSelections();
+    this.focusCell(this.sheet.cell[colNum - 1][0]);
+
     if (this.sheet.cwidth < colNum) {
-      this.selectCol(colNum - 2);
+      this.selectCol(colNum - 1);
     }
     else {
-      this.selectCol(colNum - 1);
+      this.selectCol(colNum);
     }
   }
 
@@ -757,6 +733,8 @@ class Spreadsheet extends SplitPanel {
   private _labels: Label[];
   private _cellVals : string[][];
   private _selector : SelectionManager;
+  private _xVals: MutableNumber[];
+  private _yVals: MutableNumber[];
 
   constructor(width : number, height : number) {
     super(Orientation.Horizontal);
@@ -766,12 +744,15 @@ class Spreadsheet extends SplitPanel {
     this.handleSize = 1;
     this._cells = new Array();
     this._cellVals = new Array();
+    this._xVals = new Array();
+    this._yVals = new Array();
     var panel = new SplitPanel(Orientation.Vertical);
-    var label = new Label(true, -1);
+    var label = new Label(true, null);
     panel.addWidget(label);
     this._labels.push(label);
     for (var i = 1; i <= height; i++) {
-      label = new Label(false, i);
+      this._yVals.push(new MutableNumber(i));
+      label = new Label(false, this._yVals[i - 1]);
       panel.addWidget(label);
       this._labels.push(label);
     }
@@ -780,16 +761,16 @@ class Spreadsheet extends SplitPanel {
 
     for (var i = 1; i <= width; i++) {
       panel = new SplitPanel(Orientation.Vertical);
+      this._xVals.push(new MutableNumber(i));
       this._cells.push(new Array());
       this._cellVals.push(new Array());
-      label = new Label(true, i);
+      label = new Label(true, this._xVals[i - 1]);
       panel.addWidget(label);
       this._labels.push(label);
-
       for (var j = 1; j <= height; j++) {
         this._cellVals[i - 1].push("");
 
-        var cell = new Cell(this, i, j);
+        var cell = new Cell(this, this._xVals[i - 1], this._yVals[j - 1]);
         panel.addWidget(cell);
         this._cells[i - 1].push(cell);
       }
@@ -822,73 +803,91 @@ class Spreadsheet extends SplitPanel {
   get cellVal(): string[][] {
     return this._cellVals;
   }
-  insertRow(rowNum: number) {
 
-    var label = new Label(false, rowNum);
-    this._columns[0].insertWidget(rowNum, label);
+  updateCells() {
+    for (var i = 0; i < this.cwidth; i++) {
+      for (var j = 0; j < this.cheight; j++) {
+        console.log(i + " " + j);
+        this.cell[i][j].updateView();
+      }
+    }
+  }
+
+  insertRow(rowNum: number) {
+    this._yVals.push(new MutableNumber(this._yVals.length + 1));
+    var label = new Label(false, this._yVals[this._yVals.length - 1]);
+    this._columns[0].addWidget(label);
     this._labels.push(label);
 
     for (var i = 1; i < this._columns.length; i++) {
       this._cellVals[i - 1].splice(rowNum - 1, 0, "");
-      var cell = new Cell(this, i, rowNum);
-      this._cells[i - 1].splice(rowNum - 1, 0, cell);
-      this._columns[i].insertWidget(rowNum, cell);
-      for (var j = rowNum; j < this._cells[i - 1].length; j++) {
-        this._cells[i - 1][j].cellY = this._cells[i - 1][j].cellY + 1;
-      }
+      var cell = new Cell(this, this._xVals[i - 1], this._yVals[this._yVals.length - 1]);
+      this._cells[i - 1].push(cell);
+      this._columns[i].addWidget(cell);
     }
+    this.updateCells();
   }
 
   insertCol(colNum: number) {
     var panel = new SplitPanel(Orientation.Vertical);
-    this.insertWidget(colNum, panel);
-    var label = new Label(true, colNum);
+    this.addWidget(panel);
+    this._xVals.push(new MutableNumber(this._xVals.length + 1));
+    var label = new Label(true, this._xVals[this._xVals.length - 1]);
     panel.addWidget(label);
     this._labels.push(label);
-    this._columns.splice(colNum, 0, panel);
+    this._columns.push(panel);
     
-    for (var i = colNum - 1; i < this._cells.length; i++) {
-      for (var j = 0; j < this._cells[0].length; j++) {
-        this._cells[i][j].cellX = this._cells[i][j].cellX + 1;
-      }
-    }
     var len = this._cells[0].length;
-
-    this._cells.splice(colNum - 1, 0, new Array());
+    this._cells.push(new Array());
     this._cellVals.splice(colNum - 1, 0, new Array());
 
     for (var i = 0; i < len; i++) {
-      var cell = new Cell(this, colNum, i + 1);
+      var cell = new Cell(this, this._xVals[this._xVals.length - 1], this._yVals[i]);
       panel.addWidget(cell);
       this._cellVals[colNum - 1].push("");
-      this._cells[colNum - 1].push(cell);
+      this._cells[this.cwidth - 1].push(cell);
     }
+    this.updateCells();
   }
+
   deleteRow(rowNum: number) {
-    for (var i = 1; i < this._columns.length; i++) {
-      for (var j = rowNum; j < this._cells[i - 1].length; j++) {
-        this._cells[i - 1][j].cellY = this._cells[i - 1][j].cellY - 1;
-      }
-      this._cells[i - 1][rowNum - 1].dispose();
-      this._cells[i - 1].splice(rowNum - 1, 1);
-      this._cellVals[i - 1].splice(rowNum - 1, 1);
+    for (var i = 0; i < this.cwidth; i++) {
+      this._cells[i][this.cheight - 1].dispose();
+      this._cells[i].splice(this.cheight - 1, 1);
+      this._cellVals[i].splice(rowNum - 1, 1);
     }
+    for (var i = 0; i < this.label.length; i++) {
+      if (this.label[i].num == this._yVals[this._yVals.length - 1].num && !this.label[i].column) {
+        this.delLabel(i--);
+      }
+      else {
+        this.label[i].updateText();
+      }
+    }
+    this._yVals.splice(this.cheight - 1, 1);
+    this.updateCells();
   }
   deleteCol(colNum: number) {
-    for (var i = colNum; i < this._cells.length; i++) {
-      for (var j = 0; j < this._cells[0].length; j++) {
-        this._cells[i][j].cellX = this._cells[i][j].cellX - 1;
-      }
-    }
-    while (this._cells[colNum - 1].length > 0) {
-      console.log(this._cells[colNum - 1].length);
-      this._cells[colNum - 1][0].dispose();
-      this._cells[colNum - 1].splice(0, 1);
+    while (this._cells[this.cwidth - 1].length > 0) {
+      this._cells[this.cwidth - 1][0].dispose();
+      this._cells[this.cwidth - 1].splice(0, 1);
       this._cellVals[colNum - 1].splice(0, 1);
     }
-    this._cells.splice(colNum - 1, 1);
-    this._columns[colNum].dispose();
-    this._columns.splice(colNum, 1);
+    for (var i = 0; i < this.label.length; i++) {
+      if (this.label[i].num == this._xVals[this._xVals.length - 1].num && this.label[i].column) {
+        this.delLabel(i--);
+      }
+      else {
+        this.label[i].updateText();
+      }
+    }
+    this._cells.splice(this.cwidth - 1, 1);
+
+    this._columns[this.cwidth + 1].dispose();
+    this._columns.splice(this.cwidth + 1, 1);
+
+    this._xVals.splice(this.cwidth - 1, 1);
+    this.updateCells();
   }
   
   sortByCol(colNum: number, ascending : boolean) {
@@ -957,7 +956,7 @@ class Spreadsheet extends SplitPanel {
 
 
 function main() {
-  setup(15, 27);
+  setup(27, 15);
 }
 
 function setup(width : number, height : number) {
