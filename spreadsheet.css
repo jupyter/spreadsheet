@@ -35,9 +35,26 @@ body {
   background-color: lightgrey;
   font: -moz-field;
   font: -webkit-small-control;
+  text-align: center;
   /*margin-top: 0px;*/
-  /*padding: 2px 3px;*/
+  padding: 2px 3px;
 }
+.view-field {
+
+}
+table {
+  width: 100%;
+  table-layout: fixed; /* optional, for equal spacing */
+  border-collapse: collapse;
+  border: 1px solid black;
+
+}
+
+th, td {
+  text-align: center;
+  border: 1px solid black;
+}
+
 .cell.selected.focused {
   width: calc(100% - 6px);
   height: calc(100% - 6px);

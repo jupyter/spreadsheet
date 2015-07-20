@@ -1,5 +1,7 @@
 /// <reference path="./typings/tsd.d.ts" />
 /// <reference path="../phosphor/dist/phosphor.d.ts" />
+//// <reference path="./backbone.d.ts" />
+
 import Orientation = phosphor.widgets.Orientation;
 import SizePolicy = phosphor.widgets.SizePolicy;
 import Widget = phosphor.widgets.Widget;
@@ -11,7 +13,15 @@ import MenuItem = phosphor.widgets.MenuItem;
 import connect = phosphor.core.connect;
 
 /*
+Split Table Function
+Need to make label split around. Make labels into trees. Mess heavily with views.
+-Focus on making the build operation fast - how many cells can be kept/moved/changed to avoid reinstantiating? Freelist?
+-Be able to load pandas?
+
+
+
 TODO
+-BACKBONE INTEGRATION
 -Should make preventDefault only happen if focused on the spreadsheet.
 -Shift select rows/cols
 -Select all upon the top left corner?
@@ -24,12 +34,12 @@ TODO
 -Some stuff doesnt work on internet explorer because it is an amazing program
 */
 
-function is(type : string, obj : Object) {
-    var clas = Object.prototype.toString.call(obj).slice(8, -1);
-    return obj !== undefined && obj !== null && clas === type;
+function is(type: string, obj: Object) {
+  var clas = Object.prototype.toString.call(obj).slice(8, -1);
+  return obj !== undefined && obj !== null && clas === type;
 }
 
-class MutableNumber {
+class MutableNumber { //get rid of this?
   private _num: number;
   constructor(num: number) {
     this._num = num;
@@ -42,20 +52,40 @@ class MutableNumber {
   }
 }
 
+class SplitLabel extends SplitPanel {
+  private panel: SplitPanel;
+  constructor(idx: number, data: any[]) {
+    super(Orientation.Vertical);
+    this.addWidget(new Label(true, new MutableNumber(idx)));
+    if (data.length > 0) {
+      this.panel = new SplitPanel(Orientation.Horizontal);
+      this.addWidget(this.panel);
+      for (var i = 0; i < data.length; i++) {
+        this.panel.addWidget(new SplitLabel(i, data[i]));
+      }
+    }
+  }
+}
+
 class Label extends Widget {
-  private _div: JQuery;
+  //private _div: JQuery;
+  private _div: HTMLDivElement;
   private _isCol: boolean;
   private _num: MutableNumber;
   constructor(isCol: boolean, num: MutableNumber) {
     super();
-    this._div = $('<div/>').attr('contenteditable', 'false');
+    //this._div = $('<div/>').attr('contenteditable', 'false');
+    this._div = <HTMLDivElement>document.createElement("div");
     this._num = num;
     this._isCol = isCol;
     this.updateText();
 
-    this._div.appendTo(this.node);
-    this._div.addClass('label');
-    this._div.data("label", this);
+    // this._div.appendTo(this.node);
+    // this._div.addClass('label');
+    // this._div.data("label", this);
+    this.node.appendChild(this._div);
+    this._div.classList.add('label');
+    this._div.dataset = this;
 
     this.addClass('content');
     this.verticalSizePolicy = SizePolicy.Fixed;
@@ -72,16 +102,16 @@ class Label extends Widget {
     return this._num.num;
   }
 
-  updateText() {
+  updateText(): void {
     var num = this.num;
-    this._div.text("");
+    this._div.innerHTML = "";
     if (!this._isCol) {
-      this._div.text(num);
+      this._div.innerHTML = num.toString();
     }
     else {
       while (num > 0) {
         num--;
-        this._div.text(String.fromCharCode(65 + (num % 26)) + this._div.text());
+        this._div.innerHTML = String.fromCharCode(65 + (num % 26)) + this._div.innerHTML;
         num = Math.floor(num / 26);
       }
     }
@@ -89,10 +119,10 @@ class Label extends Widget {
 }
 
 class Cell extends Widget {
-  private _cellx : MutableNumber;
-  private _celly : MutableNumber;
-  private _sheet : Spreadsheet;
-  private _div : JQuery;
+  private _cellx: MutableNumber;
+  private _celly: MutableNumber;
+  private _sheet: Spreadsheet;
+  private _div: JQuery;
 
   constructor(parent : Spreadsheet, x : MutableNumber, y : MutableNumber) {
     super();
@@ -148,18 +178,18 @@ class Cell extends Widget {
     return this.cellX == other.cellX && this.cellY == other.cellY;
   }
 
-  get text() : string {
+  get text(): string {
     return this._div.text();
   }
 
-  addDivClass(clas: string) {
+  addDivClass(clas: string): void {
     this._div.addClass(clas);
   }
-  removeDivClass(clas: string) {
+  removeDivClass(clas: string): void {
     this._div.removeClass(clas);
   }
 
-  focusDiv() {
+  focusDiv(): void {
     this._div.focus();
   }
 
@@ -391,7 +421,7 @@ class SelectionManager {
             }
         }
       });
-      /* --test--*/
+
       window.addEventListener("copy", function(e : ClipboardEvent){
         var str = "";
         for (var i = manager.minY; i <= manager.maxY; i++) {
@@ -447,7 +477,7 @@ class SelectionManager {
     this.createMenu();
   }
 
-  insertRow(rowNum: number) {
+  insertRow(rowNum: number): void {
     this.sheet.insertRow(rowNum);
     for (var i = 0; i < this.sheet.label.length; i++) {
       if (this.sheet.label[i].num >= rowNum) {
@@ -461,7 +491,7 @@ class SelectionManager {
     this.selectRow(rowNum);
   }
 
-  insertCol(colNum: number) {
+  insertCol(colNum: number): void {
     this.sheet.insertCol(colNum);
     for (var i = 0; i < this.sheet.label.length; i++) {
       if (this.sheet.label[i].num >= colNum) {
@@ -475,7 +505,7 @@ class SelectionManager {
     this.selectCol(colNum);
   }
 
-  deleteRow(rowNum : number) {
+  deleteRow(rowNum : number): void {
     this.sheet.deleteRow(rowNum);
 
     console.log(this.focusedCell);
@@ -491,7 +521,7 @@ class SelectionManager {
 
   }
 
-  deleteCol(colNum : number) {
+  deleteCol(colNum : number): void {
 
     this.sheet.deleteCol(colNum);
     this.removeFocus();
@@ -506,7 +536,7 @@ class SelectionManager {
     }
   }
 
-  createMenu() {
+  createMenu(): void {
     (function(manager : SelectionManager) {
 
       var handler = {
@@ -520,7 +550,7 @@ class SelectionManager {
         },
         colBefore: function() {
           console.log("Add col before"); 
-          manager.insertCol(manager.focusedCell.cellX);
+          manager.insertCol(manager.focusedCell.cellX - 1);
         },
         colAfter: function() {
           console.log("Add col after"); 
@@ -528,7 +558,7 @@ class SelectionManager {
         },
         delRow: function() {
           console.log("Delete row"); 
-          manager.deleteRow(manager.focusedCell.cellY);
+          manager.deleteRow(manager.focusedCell.cellY - 1);
         },
         delCol: function() {
           console.log("Delete col"); 
@@ -603,13 +633,13 @@ class SelectionManager {
     })(this);
   }
 
-  removeFocus() {
+  removeFocus(): void {
     if (typeof this.focusedCell !== 'undefined') {
       this.focusedCell.removeDivClass('focused');
     }
   }
 
-  focusCell(cell : Cell) {
+  focusCell(cell : Cell): void {
     this.minX = cell.cellX;
     this.maxX = cell.cellX;
     this.minY = cell.cellY;
@@ -620,7 +650,7 @@ class SelectionManager {
     this.select(cell);
   }
 
-  mouseSelectRange(target : Cell) {
+  mouseSelectRange(target : Cell): void {
     if (!target.equals(this.focusedCell)) {
       document.getSelection().removeAllRanges();
       //this.focusedCell._div.focus();
@@ -632,7 +662,7 @@ class SelectionManager {
     this.selectArea();
   }
 
-  selectArea() {
+  selectArea(): void {
     this.clearSelections();
     for (var i = this.minX; i <= this.maxX; i++) {
       for (var j = this.minY; j <= this.maxY; j++) {
@@ -641,7 +671,7 @@ class SelectionManager {
     }
   }
 
-  selectRow(rowNum: number) {
+  selectRow(rowNum: number): void {
     /*this.sheet.getCell(0, rowNum).focus();
     this.focusedCell = this.sheet.getCell(0, rowNum);*/
     this.minX = 1;
@@ -651,7 +681,7 @@ class SelectionManager {
     this.selectArea();
   }
 
-  selectCol(colNum: number) {
+  selectCol(colNum: number): void {
     if (colNum >= 0) {
       /*for (var i = 0; i < this.sheet.cheight; i++) {
         this.select(this.sheet.getCell(colNum, i));
@@ -667,12 +697,12 @@ class SelectionManager {
   }
 
 
-  clearCell (cell : Cell) {
+  clearCell (cell : Cell): void {
     this.sheet.cellVal[cell.cellX - 1][cell.cellY - 1] = "";
     cell.updateView();
   }
 
-  move(skipCheck : boolean, xAmount : number, yAmount : number) {
+  move(skipCheck : boolean, xAmount : number, yAmount : number): void {
     if (typeof this.focusedCell !== 'undefined' && 
       this.focusedCell.cellX + xAmount > 0 && 
       this.focusedCell.cellX + xAmount <= this.sheet.cwidth && 
@@ -690,31 +720,31 @@ class SelectionManager {
     }
   }
 
-  setCell(x : number, y : number, newVal : string) {
+  setCell(x : number, y : number, newVal : string): void {
     this.sheet.cellVal[x][y] = newVal;
     this.sheet.cell[x][y].updateView();
   }
 
-  select(cell : Cell) {
+  select(cell : Cell): void {
     this.selectedCells.push(cell);
     cell.addDivClass('selected');
   }
 
-  clearSelections() {
+  clearSelections(): void {
     for (var i = 0; i < this.selectedCells.length; i++) {
       this.selectedCells[i].removeDivClass('selected');
     }
     this.selectedCells = new Array();
   }
 
-  beginEdits() {
+  beginEdits(): void {
     if (typeof this.focusedCell !== 'undefined') {
       this.focusedCell.editable();
       this.focusedCell.focusDiv();
       this.editing = true;
     }
   }
-  endEdits() {
+  endEdits(): void {
     this.editing = false;
   }
   sortColAsc(col: number) {
@@ -724,6 +754,111 @@ class SelectionManager {
     this.sheet.sortByCol(col, false);
   }
 
+}
+
+interface ISpreadsheetModel {
+  cellVals: string[][];
+  width: number;
+  height: number;
+  getCell(x: number, y: number): string;
+  setCell(x: number, y: number, newCell: string): void;
+}
+interface ISpreadsheetViewModel {
+  selector: SelectionManager;
+  model: ISpreadsheetModel;
+}
+interface ISpreadsheetView {
+  columnLabels: Label[];
+  rowLabels: Label[];
+  cells: Cell2[][];
+  mv: ISpreadsheetViewModel;
+}
+interface ICell {
+  x: number;
+  y: number;
+  displayVal: string;
+  parent: ISpreadsheetView;
+}
+
+class Cell2 implements ICell {
+  public x: number;
+  public y: number;
+  public displayVal: string;  
+  public parent: ISpreadsheetView;
+  constructor(parent: ISpreadsheetView, x: number, y: number) {
+    this.x = x;
+    this.y = y;
+    this.parent = parent;
+    this.displayVal = parent.mv.model.cellVals[x][y];
+  }
+}
+
+
+class BasicSpreadsheetModel implements ISpreadsheetModel {
+  public cellVals: string[][];
+  public width: number;
+  public height: number;
+  constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+    this.cellVals = new Array();
+    for (var i = 0; i < width; i++) {
+      this.cellVals[i] = new Array();
+      for (var j = 0; j < height; j++) {
+        this.cellVals[i][j] = i + " " + j;
+      }
+    }
+  }
+  getCell(x: number, y: number): string {
+    return this.cellVals[x][y];
+  }
+  setCell(x: number, y: number, newCell: string) {
+    this.cellVals[x][y] = newCell;
+  }
+}
+
+
+class BasicSpreadsheetViewModel implements ISpreadsheetViewModel{
+  public model: ISpreadsheetModel;
+  public selector: SelectionManager;
+  constructor(model: ISpreadsheetModel) {
+    this.model = model;
+    //this.selector = new SelectionManager(this); //Need to unroll the manager into this
+  }
+}
+
+
+
+class BasicSpreadsheetView extends Widget implements ISpreadsheetView {
+  public columnLabels: Label[];
+  public rowLabels: Label[];
+  public cells: Cell2[][];
+  public mv: ISpreadsheetViewModel;
+  public table: HTMLTableElement;
+
+  constructor(modelView: ISpreadsheetViewModel) {
+    super();
+    this.mv = modelView;
+    this.table = <HTMLTableElement>document.createElement("table");
+    this.cells = new Array();
+    for (var i = 0; i <= this.mv.model.height; i++) { //create height + 1 rows for labels and cells
+      this.table.insertRow();
+      if (i > 0) {
+        this.cells[i - 1] = new Array();
+      }
+      var row = <HTMLTableRowElement>this.table.rows[i];
+      for (var j = 0; j <= this.mv.model.width; j++) {
+        row.insertCell();
+        console.log(j + " " + row.cells.length)
+        var cell = <HTMLTableCellElement>row.cells[j];
+        cell.innerHTML = "a";
+        if (j > 0 && i > 0) {
+          //this.cells[i - 1][j - 1] = new Cell(); //fill in later
+        }
+      }
+    }
+    this.node.appendChild(this.table);
+  }
 }
 
 //act like model class
@@ -786,7 +921,7 @@ class Spreadsheet extends SplitPanel {
   get label(): Label[] {
     return this._labels;
   }
-  delLabel(idx: number) {
+  delLabel(idx: number): void {
     this._labels[idx].dispose();
     this._labels.splice(idx, 1);
   }
@@ -804,7 +939,7 @@ class Spreadsheet extends SplitPanel {
     return this._cellVals;
   }
 
-  updateCells() {
+  updateCells(): void {
     for (var i = 0; i < this.cwidth; i++) {
       for (var j = 0; j < this.cheight; j++) {
         console.log(i + " " + j);
@@ -813,7 +948,7 @@ class Spreadsheet extends SplitPanel {
     }
   }
 
-  insertRow(rowNum: number) {
+  insertRow(rowNum: number): void {
     this._yVals.push(new MutableNumber(this._yVals.length + 1));
     var label = new Label(false, this._yVals[this._yVals.length - 1]);
     this._columns[0].addWidget(label);
@@ -828,7 +963,7 @@ class Spreadsheet extends SplitPanel {
     this.updateCells();
   }
 
-  insertCol(colNum: number) {
+  insertCol(colNum: number): void {
     var panel = new SplitPanel(Orientation.Vertical);
     this.addWidget(panel);
     this._xVals.push(new MutableNumber(this._xVals.length + 1));
@@ -850,7 +985,7 @@ class Spreadsheet extends SplitPanel {
     this.updateCells();
   }
 
-  deleteRow(rowNum: number) {
+  deleteRow(rowNum: number): void {
     for (var i = 0; i < this.cwidth; i++) {
       this._cells[i][this.cheight - 1].dispose();
       this._cells[i].splice(this.cheight - 1, 1);
@@ -867,7 +1002,7 @@ class Spreadsheet extends SplitPanel {
     this._yVals.splice(this.cheight - 1, 1);
     this.updateCells();
   }
-  deleteCol(colNum: number) {
+  deleteCol(colNum: number): void {
     while (this._cells[this.cwidth - 1].length > 0) {
       this._cells[this.cwidth - 1][0].dispose();
       this._cells[this.cwidth - 1].splice(0, 1);
@@ -890,7 +1025,7 @@ class Spreadsheet extends SplitPanel {
     this.updateCells();
   }
   
-  sortByCol(colNum: number, ascending : boolean) {
+  sortByCol(colNum: number, ascending : boolean): void {
     var nums: number[] = [];
     for (var i = 0; i < this.cheight; i++) {
       nums.push(i);
@@ -955,19 +1090,26 @@ class Spreadsheet extends SplitPanel {
 }
 
 
+
+
 function main() {
-  setup(27, 15);
+  setup();
 }
 
-function setup(width : number, height : number) {
-  var spreadsheet = new Spreadsheet(width, height);
+function setup(): void {
+  var spreadsheet = new Spreadsheet(27, 20);
 
-  spreadsheet.attach(document.getElementById('main'));
+  var spreadsheet2 = new BasicSpreadsheetView(new BasicSpreadsheetViewModel(new BasicSpreadsheetModel(27, 20)));
+  spreadsheet2.attach(document.getElementById('main'));
+  
+  //spreadsheet.attach(document.getElementById('main'));
   //spCol.horizontalSizePolicy = SizePolicy.Fixed;
 
-    spreadsheet.fit();
+  //spreadsheet.fit();
+  spreadsheet2.fit();
 
-   window.onresize = () => spreadsheet.fit();
+  //window.onresize = () => spreadsheet.fit();
+  window.onresize = () => spreadsheet2.fit();
 }
 
 window.onload = main;
