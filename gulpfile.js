@@ -1,6 +1,8 @@
 var gulp  = require('gulp'),
     gutil = require('gulp-util');
-    typescript = require('gulp-typescript');
+    typescript = require('gulp-typescript'),
+    EventEmitter = require('events').EventEmitter;
+    
 
 // create a default task and just log a message
 gulp.task('default', function() {
