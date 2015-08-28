@@ -1,7 +1,7 @@
 /// <reference path="./typings/tsd.d.ts" />
 /// <reference path="../phosphor/dist/phosphor.d.ts" />
 
-//// <reference path="./backbone.d.ts" />
+
 
 
 import Orientation = phosphor.widgets.Orientation;
@@ -12,983 +12,9 @@ import Size = phosphor.utility.Size;
 import Menu = phosphor.widgets.Menu;
 import MenuBar = phosphor.widgets.MenuBar;
 import MenuItem = phosphor.widgets.MenuItem;
-//import EventEmitter from Node;
+import KeyboardManager = require('jupyter-notebook-deps/notebook/static-src/base/js/keyboard');
 
-
-
-// //import Connect = phosphor.core.Connect;
-
-// /*
-// Split Table Function
-// Need to make label split around. Make labels into trees. Mess heavily with views.
-// -Focus on making the build operation fast - how many cells can be kept/moved/changed to avoid reinstantiating? Freelist?
-// -Be able to load pandas?
-
-
-
-// TODO
-// -BACKBONE INTEGRATION
-// -Should make preventDefault only happen if focused on the spreadsheet.
-// -Shift select rows/cols
-// -Select all upon the top left corner?
-// -Make cells extend for longer text
-// -Undo/Redo
-// */
-
-// /*known bugs
-// -Internet Explorer mystery focus on click
-// -Some stuff doesnt work on internet explorer because it is an amazing program
-// */
-
-// function is(type: string, obj: Object) {
-//   var clas = Object.prototype.toString.call(obj).slice(8, -1);
-//   return obj !== undefined && obj !== null && clas === type;
-// }
-
-// class MutableNumber { //get rid of this?
-//   private _num: number;
-//   constructor(num: number) {
-//     this._num = num;
-//   }
-//   get num(): number {
-//     return this._num;
-//   }
-//   set num(newVal: number) {
-//     this._num = newVal;
-//   }
-// }
-
-// class SplitLabel extends SplitPanel {
-//   private panel: SplitPanel;
-//   constructor(idx: number, data: any[]) {
-//     super(Orientation.Vertical);
-//     this.addWidget(new Label(true, new MutableNumber(idx)));
-//     if (data.length > 0) {
-//       this.panel = new SplitPanel(Orientation.Horizontal);
-//       this.addWidget(this.panel);
-//       for (var i = 0; i < data.length; i++) {
-//         this.panel.addWidget(new SplitLabel(i, data[i]));
-//       }
-//     }
-//   }
-// }
-
-// class Label extends Widget {
-//   //private _div: JQuery;
-//   private _div: HTMLDivElement;
-//   private _isCol: boolean;
-//   private _num: MutableNumber;
-//   constructor(isCol: boolean, num: MutableNumber) {
-//     super();
-//     //this._div = $('<div/>').attr('contenteditable', 'false');
-//     this._div = <HTMLDivElement>document.createElement("div");
-//     this._num = num;
-//     this._isCol = isCol;
-//     this.updateText();
-
-//     // this._div.appendTo(this.node);
-//     // this._div.addClass('label');
-//     // this._div.data("label", this);
-//     this.node.appendChild(this._div);
-//     this._div.classList.add('label');
-
-//     this.addClass('content');
-//     this.verticalSizePolicy = SizePolicy.Fixed;
-//     this.horizontalSizePolicy = SizePolicy.MinimumExpanding;
-//   }
-
-//   get column(): boolean {
-//     return this._isCol;
-//   }
-//   get num(): number {
-//     if (this._num == null) {
-//       return 0;
-//     }
-//     return this._num.num;
-//   }
-
-//   updateText(): void {
-//     var num = this.num;
-//     this._div.innerHTML = "";
-//     if (!this._isCol) {
-//       this._div.innerHTML = num.toString();
-//     }
-//     else {
-//       while (num > 0) {
-//         num--;
-//         this._div.innerHTML = String.fromCharCode(65 + (num % 26)) + this._div.innerHTML;
-//         num = Math.floor(num / 26);
-//       }
-//     }
-//   }
-// }
-
-// class Cell extends Widget {
-//   private _cellx: MutableNumber;
-//   private _celly: MutableNumber;
-//   private _sheet: Spreadsheet;
-//   private _div: JQuery;
-
-//   constructor(parent : Spreadsheet, x : MutableNumber, y : MutableNumber) {
-//     super();
-//     this._cellx = x;
-//     this._celly = y;
-//     this._sheet = parent;
-//     this._div = $('<div/>').attr('contenteditable', 'false');
-//     //this.attach(this._div);
-//     this._div.appendTo(this.node);
-//     this._div.addClass('cell');
-//     this._div.data("cell", this);
-
-//     this.addClass('content');
-//     this.verticalSizePolicy = SizePolicy.Fixed;
-//     this.horizontalSizePolicy = SizePolicy.MinimumExpanding;
-
-//     this.updateView();
-
-
-//     this._div.focus(this, this.onFocus);
-//     this._div.blur(this, this.onBlur)
-//   }
-
-
-//   onFocus(e : JQueryEventObject) {
-//     console.log(e);
-//   }
-
-//   onBlur(e : JQueryEventObject) {
-//     console.log(e);
-//     var cell = <Cell>e.data;
-//     cell.pushBack();
-//   }
-
-//   focus() {
-//     this._div.focus();
-//     this._div.addClass('focused');
-//   }
-
-//   editable() {
-//     this._div.attr('contenteditable', 'true');
-//   }
-
-//   updateView() {
-//     this._div.text(this._sheet.cellVal[this.cellX - 1][this.cellY - 1]);
-//   }
-//   pushBack() {
-//     this._sheet.cellVal[this.cellX - 1][this.cellY - 1] = this._div.text();
-//     this._div.attr('contenteditable', 'false');
-//     this._sheet.selector.endEdits();
-//   }
-//   equals(other : Cell): boolean {
-//     return this.cellX == other.cellX && this.cellY == other.cellY;
-//   }
-
-//   get text(): string {
-//     return this._div.text();
-//   }
-
-//   addDivClass(clas: string): void {
-//     this._div.addClass(clas);
-//   }
-//   removeDivClass(clas: string): void {
-//     this._div.removeClass(clas);
-//   }
-
-//   focusDiv(): void {
-//     this._div.focus();
-//   }
-
-//   get cellX(): number {
-//     return this._cellx.num;
-//   }
-//   get cellY(): number {
-//     return this._celly.num;
-//   }
-// }
-
-// class SelectionManager {
-//   private sheet: Spreadsheet;
-//   private selectedCells: Cell[];
-//   private focusedCell: Cell;
-//   private mouseDown: boolean; //for highlighting
-//   private editing: boolean; //for navigation, if false, not editing a cell
-//   private minX: number;
-//   private maxX: number;
-//   private minY: number;
-//   private maxY: number;
-
-//   constructor(sheet : Spreadsheet) {
-//     this.sheet = sheet;
-//     this.selectedCells = new Array();
-//     this.editing = false;
-
-//     (function(sheet : Spreadsheet, manager : SelectionManager) {
-
-//       /* ----------------- MOUSE DOWN ----------------------*/
-//       sheet.node.addEventListener("mousedown", function (e : MouseEvent) {
-//         if (is('HTMLDivElement', e.target)) {
-//           var cell = <Cell>$(e.target).data("cell");
-//           var label = <Label>$(e.target).data("label");
-
-//           if (typeof cell !== 'undefined') {
-//             manager.mouseDown = true;
-//             if (!e.shiftKey) {
-
-//               manager.removeFocus();
-//               manager.clearSelections();
-
-//               manager.focusCell(cell);
-//             }
-//             else {
-//               manager.mouseSelectRange(cell);
-//             }
-//           }
-//           if (typeof label !== 'undefined') {
-//             if (e.shiftKey) {
-//               if (label.column) {/*
-//                 if (label.num manager.focusedCell.cellX) {
-
-//                 }*/
-//                 manager.minX = manager.focusedCell.cellX;
-//                 manager.maxX = manager.focusedCell.cellX;
-//                 for (var i = Math.min(label.num, manager.focusedCell.cellX); 
-//                   i < Math.max(label.num, manager.focusedCell.cellX + 1);
-//                   i++) {
-//                   manager.selectCol(i);
-//                 }
-//               }
-//               else {
-//                 manager.minY = manager.focusedCell.cellY;
-//                 manager.maxY = manager.focusedCell.cellY;
-//                 for (var i = Math.min(label.num, manager.focusedCell.cellY); 
-//                   i < Math.max(label.num, manager.focusedCell.cellY) + 1;
-//                   i++) {
-//                   manager.selectRow(i);
-//                 }
-//               }
-//             }
-//             else {
-//               manager.removeFocus();
-//               manager.clearSelections();
-//               if (label.column) {
-//                 manager.focusCell(sheet.cell[label.num - 1][0]);
-//                 manager.selectCol(label.num);
-//               }
-//               else {
-//                 manager.focusCell(sheet.cell[0][label.num - 1]);
-//                 manager.selectRow(label.num);
-//               }
-//             }
-//           }
-//         }
-//       });
-
-//       /* ----------------- MOUSE MOVE ----------------------*/
-//       sheet.node.addEventListener("mousemove", function (e : MouseEvent){
-//         if (typeof e.target !== 'undefined' && 
-//           typeof manager.focusedCell != 'undefined') {
-//           var cell = <Cell>$(e.target).data("cell");
-//           if(manager.mouseDown && typeof cell !== 'undefined' && 
-//             !manager.editing) {
-//             manager.mouseSelectRange(cell);
-//           }
-//         }
-//       });
-
-//       /* --------------- MOUSE UP --------------------------*/
-//       //sheet.node.addEventListener("mouseup", function (e : MouseEvent) {
-//       $(window).mouseup(function (e : JQueryEventObject) {
-//         manager.mouseDown = false;
-//       });
-
-//       /* -------------- DOUBLE CLICK ---------------------*/
-//       sheet.node.addEventListener("dblclick", function (e : MouseEvent) {
-//         if (typeof e.target !== 'undefined' && 
-//           typeof $(e.target).data('cell') !== 'undefined') {
-//           manager.beginEdits();
-//         }
-//       });
-
-//       /* --------------------KEY PRESS -----------------------*/
-
-//       window.addEventListener("keydown", function (e : KeyboardEvent) {
-//         switch (e.keyCode) {
-
-//           case 13: //enter
-//             if (e.shiftKey) {
-//               manager.move(true, 0, -1);
-//             }
-//             else {
-//               manager.move(true, 0, 1);
-//             }
-//             if (manager.editing) {
-//               e.preventDefault();
-//             }
-            
-//             break;
-//           case 8: //backspace/delete
-//           case 46:
-//             console.log("backspace pressed");
-//             if (!manager.editing) {
-//               e.preventDefault();
-//               for (var i = 0; i < manager.selectedCells.length; i++) {
-                
-//                 manager.clearCell(manager.selectedCells[i]);
-//               }
-//             }
-//             break;
-//           case 37: //left arrow
-//             if (!e.shiftKey) {
-//               manager.move(false, -1, 0);
-//             }
-//             else {
-//               if (manager.maxX > manager.focusedCell.cellX) {
-//                 manager.maxX--;
-//                 manager.selectArea();
-//               }
-//               else {
-//                 if (manager.minX > 1) {
-//                   manager.minX--;
-//                   manager.selectArea();
-//                 }
-//               }
-//             }
-//             break;
-//           case 38: //up arrow
-//             if (!e.shiftKey) {
-//               manager.move(false, 0, -1);
-//             }
-//             else {
-//               if (manager.maxY > manager.focusedCell.cellY) {
-//                 manager.maxY--;
-//                 manager.selectArea();
-              
-//               }
-//               else {
-//                 if (manager.minY > 1) {
-//                   manager.minY--;
-//                   manager.selectArea();
-//                 }
-//               }
-//             }
-//             break;
-//           case 39: //right arrow
-//             if (!e.shiftKey) {
-//               manager.move(false, 1, 0);
-//             }
-//             else {
-//               if (manager.minX < manager.focusedCell.cellX) {
-//                 manager.minX++;
-//                 manager.selectArea();
-//               }
-//               else {
-//                 if (manager.maxX < sheet.cwidth) {
-//                   manager.maxX++;
-//                   manager.selectArea();
-//                 }
-//               }
-//             }
-//             break;
-//           case 40: //down arrow
-//             if (!e.shiftKey) {
-//               manager.move(false, 0, 1);
-//             }
-//             else {
-//               if (manager.minY < manager.focusedCell.cellY) {
-//                 manager.minY++;
-//                 manager.selectArea();
-//               }
-//               else {
-//                 if (manager.maxY < sheet.cheight) {
-//                   manager.maxY++;
-//                   manager.selectArea();
-//                 }
-//               }
-//             }
-//             break;
-//           case 9: //tab
-//             e.preventDefault(); //check focus on this one...
-//             if (e.shiftKey) {
-//               manager.move(true, -1, 0);
-//             }
-//             else {
-//               manager.move(true, 1, 0);
-//             }
-//             break;
-//           default:
-//             if (!manager.editing && e.keyCode >= 32 && e.keyCode != 127 
-//               && !e.altKey && !e.ctrlKey) {
-//               console.log(e.keyCode);
-//               if (typeof manager.focusedCell !== 'undefined') {
-//                 manager.clearCell(manager.focusedCell);
-//                 manager.beginEdits();
-//               }
-//             }
-//         }
-//       });
-
-//       window.addEventListener("copy", function(e : ClipboardEvent){
-//         var str = "";
-//         for (var i = manager.minY; i <= manager.maxY; i++) {
-//           for (var j = manager.minX; j <= manager.maxX; j++) {
-//             str = str + manager.sheet.cell[j - 1][i - 1].text;
-//             if (j < manager.maxX) {
-//               str = str + '\t';
-//             }
-//           }
-//           if (i < manager.maxY) {
-//             str = str + '\r\n';
-//           }
-//         }
-//         e.clipboardData.setData('text/plain', str);
-//         e.preventDefault();
-//       });
-
-//       window.addEventListener("paste", function(e: ClipboardEvent) {
-//         if (!manager.editing) {
-//           manager.clearSelections();
-//           var lines = e.clipboardData.getData("text/plain").split("\r\n");
-//           var maxW = 0;
-//           for (var i = 0; i < lines.length; i++) {
-//             var cells = lines[i].split("\t");
-//             if (cells.length > maxW) {
-//               maxW = cells.length;
-//             }
-//           }
-//           for (var i = 0; i < lines.length; i++) {
-//             var cells = lines[i].split("\t");
-//             for (var j = 0; j < maxW; j++) {
-//               if (manager.minX + j <= sheet.cwidth 
-//                 && manager.minY + i <= sheet.cheight) {
-//                 if (typeof cells[j] !== 'undefined') {
-//                   manager.setCell(manager.minX + j - 1, manager.minY + i - 1, cells[j]);
-//                 }
-//                 else {
-//                   manager.setCell(manager.minX + j - 1, manager.minY + i - 1, "");
-//                 }
-//                 manager.select(manager.sheet.cell[manager.minX + j - 1][manager.minY + i - 1]);
-//               }
-//             }
-//           }
-//           manager.maxX = manager.minX + maxW - 1;
-//           manager.maxY = manager.minY + lines.length - 1;
-//           manager.removeFocus();
-//           manager.focusCell(manager.sheet.cell[manager.minX - 1][manager.minY - 1]);
-//         }
-//       });
-//     })(this.sheet, this);
-
-//     this.focusCell(this.sheet.cell[0][0]);
-//     this.createMenu();
-//   }
-
-//   insertRow(rowNum: number): void {
-//     this.sheet.insertRow(rowNum);
-//     for (var i = 0; i < this.sheet.label.length; i++) {
-//       if (this.sheet.label[i].num >= rowNum) {
-//         this.sheet.label[i].updateText();
-//       }
-//     }
-
-//     this.removeFocus();
-//     this.clearSelections();
-//     this.focusCell(this.sheet.cell[0][rowNum - 1]);
-//     this.selectRow(rowNum);
-//   }
-
-//   insertCol(colNum: number): void {
-//     this.sheet.insertCol(colNum);
-//     for (var i = 0; i < this.sheet.label.length; i++) {
-//       if (this.sheet.label[i].num >= colNum) {
-//         this.sheet.label[i].updateText();
-//       }
-//     }
-
-//     this.removeFocus();
-//     this.clearSelections();
-//     this.focusCell(this.sheet.cell[colNum - 1][0]);
-//     this.selectCol(colNum);
-//   }
-
-//   deleteRow(rowNum : number): void {
-//     this.sheet.deleteRow(rowNum);
-
-//     console.log(this.focusedCell);
-//     this.removeFocus();
-//     this.clearSelections();
-//     this.focusCell(this.sheet.cell[0][rowNum - 1]);
-//     if (this.sheet.cheight < rowNum) {
-//       this.selectRow(rowNum - 1);
-//     }
-//     else {
-//       this.selectRow(rowNum);
-//     }
-
-//   }
-
-//   deleteCol(colNum : number): void {
-
-//     this.sheet.deleteCol(colNum);
-//     this.removeFocus();
-//     this.clearSelections();
-//     this.focusCell(this.sheet.cell[colNum - 1][0]);
-
-//     if (this.sheet.cwidth < colNum) {
-//       this.selectCol(colNum - 1);
-//     }
-//     else {
-//       this.selectCol(colNum);
-//     }
-//   }
-
-//   createMenu(): void {
-//     (function(manager : SelectionManager) {
-
-//       var handler = {
-//         rowBefore: () => {
-//           console.log("Add row before");
-//           manager.insertRow(manager.focusedCell.cellY);
-//         },
-//         rowAfter: () => {
-//           console.log("Add row after"); 
-//           manager.insertRow(manager.focusedCell.cellY + 1);
-//         },
-//         colBefore: () => {
-//           console.log("Add col before"); 
-//           manager.insertCol(manager.focusedCell.cellX - 1);
-//         },
-//         colAfter: () => {
-//           console.log("Add col after"); 
-//           manager.insertCol(manager.focusedCell.cellX + 1);
-//         },
-//         delRow: () => {
-//           console.log("Delete row"); 
-//           manager.deleteRow(manager.focusedCell.cellY - 1);
-//         },
-//         delCol: () => {
-//           console.log("Delete col"); 
-//           manager.deleteCol(manager.focusedCell.cellX);
-//         },
-//         sortColAsc: () => {
-//           console.log("Sort col asc"); 
-//           manager.sortColAsc(manager.focusedCell.cellX);
-//         },
-//         sortColDesc: () => {
-//           console.log("Sort col desc"); 
-//           manager.sortColDesc(manager.focusedCell.cellX);
-//         },
-//       };
-//       var rowBeforeItem = new MenuItem({
-//         text: "Insert Row Before",
-//         className: 'rowBefore'
-//       });
-//       var rowAfterItem = new MenuItem({
-//         text: "Insert Row After",
-//         className: 'rowAfter'
-//       });
-//       var colBeforeItem = new MenuItem({
-//         text: "Insert Column Before",
-//         className: 'colBefore'
-//       });
-//       var colAfterItem = new MenuItem({
-//         text: "Insert Column After",
-//         className: 'colAfter'
-//       });
-//       var delRowItem = new MenuItem({
-//         text: "Delete Row",
-//         className: 'delRow'
-//       });
-//       var delColItem = new MenuItem({
-//         text: "Delete Column",
-//         className: 'delCol'
-//       });
-//       var sortColAscItem = new MenuItem({
-//         text: "Sort By Column A-Z",
-//         className: 'sortAscCol'
-//       });
-//       var sortColDescItem = new MenuItem({
-//         text: "Sort By Column Z-A",
-//         className: 'sortDescCol'
-//       });
-
-//       rowBeforeItem.triggered.connect(handler.rowBefore);
-//       rowAfterItem.triggered.connect(handler.rowAfter);
-//       colBeforeItem.triggered.connect(handler.colBefore);
-//       colAfterItem.triggered.connect(handler.colAfter);
-//       delRowItem.triggered.connect(handler.delRow);
-//       delColItem.triggered.connect(handler.delCol);
-//       sortColAscItem.triggered.connect(handler.sortColAsc);
-//       sortColDescItem.triggered.connect(handler.sortColDesc);
-
-//       var rightClickMenu = new Menu([
-//         rowBeforeItem,
-//         rowAfterItem,
-//         colBeforeItem,
-//         colAfterItem,
-//         delRowItem,
-//         delColItem,
-//         sortColAscItem,
-//         sortColDescItem]);
-//           document.addEventListener('contextmenu', function (event) {
-//               event.preventDefault();
-//               var x = event.clientX;
-//               var y = event.clientY;
-//               rightClickMenu.popup(x, y);
-//           });
-//     })(this);
-//   }
-
-//   removeFocus(): void {
-//     if (typeof this.focusedCell !== 'undefined') {
-//       this.focusedCell.removeDivClass('focused');
-//     }
-//   }
-
-//   focusCell(cell : Cell): void {
-//     this.minX = cell.cellX;
-//     this.maxX = cell.cellX;
-//     this.minY = cell.cellY;
-//     this.maxY = cell.cellY;
-
-//     cell.focus();
-//     this.focusedCell = cell;
-//     this.select(cell);
-//   }
-
-//   mouseSelectRange(target : Cell): void {
-//     if (!target.equals(this.focusedCell)) {
-//       document.getSelection().removeAllRanges();
-//       //this.focusedCell._div.focus();
-//     }
-//     this.minX = Math.min(target.cellX, this.focusedCell.cellX);
-//     this.maxX = Math.max(target.cellX, this.focusedCell.cellX);
-//     this.minY = Math.min(target.cellY, this.focusedCell.cellY);
-//     this.maxY = Math.max(target.cellY, this.focusedCell.cellY);
-//     this.selectArea();
-//   }
-
-//   selectArea(): void {
-//     this.clearSelections();
-//     for (var i = this.minX; i <= this.maxX; i++) {
-//       for (var j = this.minY; j <= this.maxY; j++) {
-//         this.select(this.sheet.cell[i - 1][j - 1]);
-//       }
-//     }
-//   }
-
-//   selectRow(rowNum: number): void {
-//     /*this.sheet.getCell(0, rowNum).focus();
-//     this.focusedCell = this.sheet.getCell(0, rowNum);*/
-//     this.minX = 1;
-//     this.maxX = this.sheet.cwidth;
-//     this.minY = Math.min(rowNum, this.minY);
-//     this.maxY = Math.max(rowNum, this.maxY);
-//     this.selectArea();
-//   }
-
-//   selectCol(colNum: number): void {
-//     if (colNum >= 0) {
-//       /*for (var i = 0; i < this.sheet.cheight; i++) {
-//         this.select(this.sheet.getCell(colNum, i));
-//       }
-//       this.sheet.getCell(colNum, 0).focus();
-//       this.focusedCell = this.sheet.getCell(colNum, 0);*/
-//       this.minY = 1;
-//       this.maxY = this.sheet.cheight;
-//       this.minX = Math.min(colNum, this.minX);
-//       this.maxX = Math.max(colNum, this.maxX);
-//       this.selectArea();
-//     }
-//   }
-
-
-//   clearCell (cell : Cell): void {
-//     this.sheet.cellVal[cell.cellX - 1][cell.cellY - 1] = "";
-//     cell.updateView();
-//   }
-
-//   move(skipCheck : boolean, xAmount : number, yAmount : number): void {
-//     if (typeof this.focusedCell !== 'undefined' && 
-//       this.focusedCell.cellX + xAmount > 0 && 
-//       this.focusedCell.cellX + xAmount <= this.sheet.cwidth && 
-//       this.focusedCell.cellY + yAmount > 0 && 
-//       this.focusedCell.cellY + yAmount <= this.sheet.cheight) {
-//       if (!this.editing || skipCheck) {
-//         this.clearSelections();
-//         this.focusedCell.pushBack();
-//         this.focusedCell.removeDivClass('focused');
-
-//         var cell = this.sheet.cell[this.focusedCell.cellX - 1 + xAmount] 
-//           [this.focusedCell.cellY - 1 + yAmount];
-//         this.focusCell(cell);
-//       }
-//     }
-//   }
-
-//   setCell(x : number, y : number, newVal : string): void {
-//     this.sheet.cellVal[x][y] = newVal;
-//     this.sheet.cell[x][y].updateView();
-//   }
-
-//   select(cell : Cell): void {
-//     this.selectedCells.push(cell);
-//     cell.addDivClass('selected');
-//   }
-
-//   clearSelections(): void {
-//     for (var i = 0; i < this.selectedCells.length; i++) {
-//       this.selectedCells[i].removeDivClass('selected');
-//     }
-//     this.selectedCells = new Array();
-//   }
-
-//   beginEdits(): void {
-//     if (typeof this.focusedCell !== 'undefined') {
-//       this.focusedCell.editable();
-//       this.focusedCell.focusDiv();
-//       this.editing = true;
-//     }
-//   }
-//   endEdits(): void {
-//     this.editing = false;
-//   }
-//   sortColAsc(col: number) {
-//     this.sheet.sortByCol(col, true);
-//   }
-//   sortColDesc(col: number) {
-//     this.sheet.sortByCol(col, false);
-//   }
-
-// }
-
-
-// //act like model class
-// class Spreadsheet extends SplitPanel {
-//   private _columns: SplitPanel[];
-//   private _cells: Cell[][];
-//   private _labels: Label[];
-//   private _cellVals: string[][];
-//   private _selector: SelectionManager;
-//   private _xVals: MutableNumber[];
-//   private _yVals: MutableNumber[];
-
-//   constructor(width: number, height: number) {
-//     super(Orientation.Horizontal);
-//     this._columns = new Array();
-//     this._labels = new Array();
-
-//     this.handleSize = 1;
-//     this._cells = new Array();
-//     this._cellVals = new Array();
-//     this._xVals = new Array();
-//     this._yVals = new Array();
-//     var panel = new SplitPanel(Orientation.Vertical);
-//     var label = new Label(true, null);
-//     panel.addWidget(label);
-//     this._labels.push(label);
-//     for (var i = 1; i <= height; i++) {
-//       this._yVals.push(new MutableNumber(i));
-//       label = new Label(false, this._yVals[i - 1]);
-//       panel.addWidget(label);
-//       this._labels.push(label);
-//     }
-//     this.addWidget(panel);
-//     this._columns.push(panel);
-
-//     for (var i = 1; i <= width; i++) {
-//       panel = new SplitPanel(Orientation.Vertical);
-//       this._xVals.push(new MutableNumber(i));
-//       this._cells.push(new Array());
-//       this._cellVals.push(new Array());
-//       label = new Label(true, this._xVals[i - 1]);
-//       panel.addWidget(label);
-//       this._labels.push(label);
-//       for (var j = 1; j <= height; j++) {
-//         this._cellVals[i - 1].push("");
-
-//         var cell = new Cell(this, this._xVals[i - 1], this._yVals[j - 1]);
-//         panel.addWidget(cell);
-//         this._cells[i - 1].push(cell);
-//       }
-//       this.addWidget(panel);
-//       this._columns.push(panel);
-//     }
-
-//     this._selector = new SelectionManager(this);
-//   }
-//   get selector(): SelectionManager {
-//     return this._selector;
-//   }
-//   get label(): Label[] {
-//     return this._labels;
-//   }
-//   delLabel(idx: number): void {
-//     this._labels[idx].dispose();
-//     this._labels.splice(idx, 1);
-//   }
-
-//   get cell(): Cell[][] {
-//     return this._cells;
-//   }
-//   get cwidth(): number {
-//     return this._cells.length;
-//   }
-//   get cheight(): number {
-//     return this._cells[0].length;
-//   }
-//   get cellVal(): string[][] {
-//     return this._cellVals;
-//   }
-
-//   updateCells(): void {
-//     for (var i = 0; i < this.cwidth; i++) {
-//       for (var j = 0; j < this.cheight; j++) {
-//         console.log(i + " " + j);
-//         this.cell[i][j].updateView();
-//       }
-//     }
-//   }
-
-//   insertRow(rowNum: number): void {
-//     this._yVals.push(new MutableNumber(this._yVals.length + 1));
-//     var label = new Label(false, this._yVals[this._yVals.length - 1]);
-//     this._columns[0].addWidget(label);
-//     this._labels.push(label);
-
-//     for (var i = 1; i < this._columns.length; i++) {
-//       this._cellVals[i - 1].splice(rowNum - 1, 0, "");
-//       var cell = new Cell(this, this._xVals[i - 1], this._yVals[this._yVals.length - 1]);
-//       this._cells[i - 1].push(cell);
-//       this._columns[i].addWidget(cell);
-//     }
-//     this.updateCells();
-//   }
-
-//   insertCol(colNum: number): void {
-//     var panel = new SplitPanel(Orientation.Vertical);
-//     this.addWidget(panel);
-//     this._xVals.push(new MutableNumber(this._xVals.length + 1));
-//     var label = new Label(true, this._xVals[this._xVals.length - 1]);
-//     panel.addWidget(label);
-//     this._labels.push(label);
-//     this._columns.push(panel);
-
-//     var len = this._cells[0].length;
-//     this._cells.push(new Array());
-//     this._cellVals.splice(colNum - 1, 0, new Array());
-
-//     for (var i = 0; i < len; i++) {
-//       var cell = new Cell(this, this._xVals[this._xVals.length - 1], this._yVals[i]);
-//       panel.addWidget(cell);
-//       this._cellVals[colNum - 1].push("");
-//       this._cells[this.cwidth - 1].push(cell);
-//     }
-//     this.updateCells();
-//   }
-
-//   deleteRow(rowNum: number): void {
-//     for (var i = 0; i < this.cwidth; i++) {
-//       this._cells[i][this.cheight - 1].dispose();
-//       this._cells[i].splice(this.cheight - 1, 1);
-//       this._cellVals[i].splice(rowNum - 1, 1);
-//     }
-//     for (var i = 0; i < this.label.length; i++) {
-//       if (this.label[i].num == this._yVals[this._yVals.length - 1].num && !this.label[i].column) {
-//         this.delLabel(i--);
-//       }
-//       else {
-//         this.label[i].updateText();
-//       }
-//     }
-//     this._yVals.splice(this.cheight - 1, 1);
-//     this.updateCells();
-//   }
-//   deleteCol(colNum: number): void {
-//     while (this._cells[this.cwidth - 1].length > 0) {
-//       this._cells[this.cwidth - 1][0].dispose();
-//       this._cells[this.cwidth - 1].splice(0, 1);
-//       this._cellVals[colNum - 1].splice(0, 1);
-//     }
-//     for (var i = 0; i < this.label.length; i++) {
-//       if (this.label[i].num == this._xVals[this._xVals.length - 1].num && this.label[i].column) {
-//         this.delLabel(i--);
-//       }
-//       else {
-//         this.label[i].updateText();
-//       }
-//     }
-//     this._cells.splice(this.cwidth - 1, 1);
-
-//     this._columns[this.cwidth + 1].dispose();
-//     this._columns.splice(this.cwidth + 1, 1);
-
-//     this._xVals.splice(this.cwidth - 1, 1);
-//     this.updateCells();
-//   }
-
-//   sortByCol(colNum: number, ascending: boolean): void {
-//     var nums: number[] = [];
-//     for (var i = 0; i < this.cheight; i++) {
-//       nums.push(i);
-//     }
-//     if (ascending) {
-//       nums = this.sortCol(nums, this._cellVals[colNum - 1]);
-//     }
-//     else {
-//       nums = this.sortCol(nums, this._cellVals[colNum - 1], function(a: string, b: string) {
-//         return b < a;
-//       });
-//     }
-//     console.log(nums);
-//     var newVals: string[][] = [];
-//     for (var i = 0; i < this.cwidth; i++) {
-//       newVals.push([]);
-//     }
-//     for (var i = 0; i < this.cheight; i++) {
-//       for (var j = 0; j < this.cwidth; j++) {
-//         console.log(j + " " + i);
-//         newVals[j][i] = this.cellVal[j][nums[i]];
-//       }
-//     }
-//     this._cellVals = newVals;
-//     for (var i = 0; i < this.cwidth; i++) {
-//       for (var j = 0; j < this.cheight; j++) {
-//         this._cells[i][j].updateView();
-//       }
-//     }
-//     console.log(this._cellVals[colNum - 1]);
-//   }
-//   protected sortCol(nums: number[], vals: string[], sorter?: (a: string, b: string) => boolean): number[] {
-//     if (vals.length == 0) {
-//       return nums;
-//     }
-//     if (!sorter) {
-//       console.log("No sort function passed");
-//       sorter = function(a: string, b: string) {
-//         return a < b;
-//       }
-//     }
-//     var leftVals: string[] = [];
-//     var leftNums: number[] = [];
-//     var rightVals: string[] = [];
-//     var rightNums: number[] = [];
-//     var pivot = vals[0];
-
-//     for (var i = 1; i < vals.length; i++) {
-//       if ((sorter(vals[i], pivot) || pivot == "") && vals[i] != "") {
-//         leftVals.push(vals[i]);
-//         leftNums.push(nums[i]);
-//       }
-//       else {
-//         rightVals.push(vals[i]);
-//         rightNums.push(nums[i]);
-//       }
-//     }
-//     return this.sortCol(leftNums, leftVals, sorter).concat(nums[0])
-//       .concat(this.sortCol(rightNums, rightVals, sorter));
-//   }
-
-// }
+console.log("finished imports");
 
 
 interface ISpreadsheetModel {
@@ -1015,11 +41,13 @@ interface ISpreadsheetViewModel {
   maxX: number;
   minY: number;
   maxY: number;
-  events: Object;
+  events: SpreadsheetEventObject;
   eventManager: any;
 
   insertRow(rowNum: number): void;
   insertCol(colNum: number): void;
+  deleteRow(rowNum: number): void;
+  deleteCol(colNum: number): void;
   mouseClicked(e: MouseEvent): void;
   clearSelections(): void;
   focusCell(cellX: number, cellY: number): void;
@@ -1047,8 +75,8 @@ interface ISpreadsheetView {
 }
 
 interface ICell {
-  _row: number;
-  _col: number;
+  _row: MutableNumber;
+  _col: MutableNumber;
   _displayVal: string;
   parent: ISpreadsheetView;
   setDisplayVal(newVal: string): void;
@@ -1061,42 +89,63 @@ interface ICell {
   finishEdits(): void;
   select(): void;
   deselect(): void;
+  startFocus(): void;
+  endFocus(): void;
   getHTMLElement(): HTMLElement;
+}
+
+class MutableNumber {
+  public val: number;
+  constructor(val: number) {
+    this.val = val;
+  }
 }
 
 class HTMLLabel {
   public val: number;
   public isCol: boolean;
-  public cell: HTMLTableCellElement;
+  public div: HTMLDivElement;
   constructor(val: number, isCol: boolean, newCell: HTMLTableCellElement) {
     this.val = val;
     this.isCol = isCol;
-    this.cell = newCell;
-    this.cell.innerHTML = this.val.toString();
+    this.div = document.createElement("div");
+    newCell.appendChild(this.div);
+    this.div.innerHTML = this.val.toString();
+    this.div.setAttribute("data-type", "label");
+    this.div.setAttribute("data-col", isCol);
+    this.div.setAttribute("data-num", val.toString());
   }
 }
 
 class SpreadsheetEventObject {
-  public mousedown;
-  public mouseup;
+  public mousedown: (e: MouseEvent) => void;
+  public mouseup: (e: MouseEvent) => void;
+  public mousemove: (e: MouseEvent) => void;
+  public doubleclick: (e: MouseEvent) => void;
+  public keypressed: (e: KeyboardEvent) => void;
+  public copy: (e: ClipboardEvent) => void;  
+  public paste: (e: ClipboardEvent) => void;  
 }
 
 class HTMLCell implements ICell {
-  public _row: number;
-  public _col: number;
+  public _row: MutableNumber;
+  public _col: MutableNumber;
   public _displayVal: string;  
   public parent: ISpreadsheetView;
   public div: HTMLDivElement;
-  constructor(parent: ISpreadsheetView, row: number, col: number) {
+  constructor(parent: ISpreadsheetView, mutableRow: MutableNumber, mutableCol: MutableNumber) {
     this.parent = parent;
 
     this.div = document.createElement("div");
     this.div.setAttribute("contenteditable", "false");
     this.div.classList.add("cell");
+    this.div.setAttribute("data-type", "cell");
 
-    this.row = row;
-    this.col = col;
-    this.displayVal = parent.mv.model.cellVals[col][row];
+    this._row = mutableRow;
+    this._col = mutableCol;
+    this.row = mutableRow.val;
+    this.col = mutableCol.val;
+    this.displayVal = parent.mv.model.cellVals[this.col][this.row];
   }
   setDisplayVal(newVal: string) {
     this.displayVal = newVal;
@@ -1119,14 +168,10 @@ class HTMLCell implements ICell {
   beginEdits() {
     this.div.setAttribute("contentEditable", "true");
     this.div.focus();
-    var parentElement = <HTMLTableCellElement>this.div.parentElement;
-    parentElement.classList.add("focusedtd");
-    console.log(parentElement);
   }
   finishEdits() {
     this.div.setAttribute("contentEditable", "false");
-    var parentElement = <HTMLTableCellElement>this.div.parentElement;
-    parentElement.classList.remove("focusedtd");
+    this.parent.mv.model.cellVals[this.col][this.row] = this.div.innerHTML.toString();
   }
   select() {
     var container = <HTMLTableCellElement>this.div.parentElement;
@@ -1137,6 +182,15 @@ class HTMLCell implements ICell {
     var container = <HTMLTableCellElement>this.div.parentElement;
     this.div.classList.remove("selected");
     container.classList.remove("selectedtd");
+  }
+  startFocus() {
+    var parentElement = <HTMLTableCellElement>this.div.parentElement;
+    parentElement.classList.add("focusedtd");
+  }
+  endFocus() {
+    this.finishEdits();
+    var parentElement = <HTMLTableCellElement>this.div.parentElement;
+    parentElement.classList.remove("focusedtd");
   }
   getHTMLElement() {
     return this.div;
@@ -1150,18 +204,18 @@ class HTMLCell implements ICell {
     return this._displayVal;
   }
   set col(newVal: number) {
-    this._col = newVal;
-    this.div.setAttribute("data-cellX", this._col.toString());
+    this._col.val = newVal;
+    this.div.setAttribute("data-cellX", this._col.val.toString());
   }
   get col() {
-    return this._col;
+    return this._col.val;
   }
   set row(newVal: number) {
-    this._row = newVal;
-    this.div.setAttribute("data-cellY", this._row.toString());
+    this._row.val = newVal;
+    this.div.setAttribute("data-cellY", this._row.val.toString());
   }
   get row() {
-    return this._row;
+    return this._row.val;
   }
 }
 
@@ -1186,9 +240,9 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
   setCell(x: number, y: number, newCell: string) {
     this.cellVals[x][y] = newCell;
 
-    var event = new CustomEvent("cellchanged", {'detail': {
-      'cellx': x,
-      'celly': y,
+    var event = new CustomEvent("cellchanged", {detail: {
+      cellx: x,
+      celly: y,
     }});
     dispatchEvent(event);
   }
@@ -1199,9 +253,13 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
     }
     this.width++;
   }
+  
   deleteCol(colNum: number) {
     this.cellVals.splice(colNum, 1);
+    this.width--;
   }
+
+
   insertRow(rowNum: number) {
     for (var i = 0; i < this.width; i++) {
       this.cellVals[i].splice(rowNum, 0, "");
@@ -1212,6 +270,7 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
     for (var i = 0; i < this.width; i++) {
       this.cellVals[i].splice(rowNum, 1);
     }
+    this.height--;
   }
   clearCell(x: number, y: number) {
     this.setCell(x, y, "");
@@ -1232,7 +291,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
   public maxX: number;
   public minY: number;
   public maxY: number;
-  public events: Object;
+  public events: SpreadsheetEventObject;
 
   public eventManager: any;
 
@@ -1244,7 +303,6 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.selectArea();
     this.model.insertRow(rowNum);
     this.focusCell(0, rowNum);
-    this.mouseDown = false;
   }
 
   insertCol(colNum: number) {
@@ -1253,18 +311,31 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.minX = colNum;
     this.maxX = colNum;
     this.selectArea();
-    this.model.insertRow(colNum);
     this.focusCell(colNum, 0);
-    this.mouseDown = false;
-  }  
+  }
+
+  deleteRow (rowNum: number) {
+    this.minX = 0;
+    this.maxX = this.model.width - 1;
+    this.minY = rowNum;
+    this.maxY = rowNum;
+    this.selectArea();
+    this.focusCell(0, rowNum);
+  }
+  deleteCol(colNum: number) {
+    this.minY = 0;
+    this.maxY = this.model.height - 1;
+    this.minX = colNum;
+    this.maxX = colNum;
+    this.selectArea();
+    this.focusCell(colNum, 0);
+  }
 
   move(skipCheck: boolean, xAmount: number, yAmount: number): void {
-    console.log("moving");
     if (this.focusedCellX + xAmount >= 0 &&
       this.focusedCellX + xAmount < this.model.width &&
       this.focusedCellY + yAmount >= 0 &&
       this.focusedCellY + yAmount < this.model.height) {
-      console.log("past first check");
       if (!this.editing || skipCheck) {
         this.focusedCellX += xAmount;
         this.focusedCellY += yAmount;
@@ -1310,6 +381,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.maxY = cellY;
     console.log("In focusCell");
     //cell.focus();
+    console.log(cellX);
+    console.log(cellY);
     this.focusedCellX = cellX;
     this.focusedCellY = cellY;
 
@@ -1347,7 +420,6 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.clearSelections();
     for (var i = this.minX; i <= this.maxX; i++) {
       for (var j = this.minY; j <= this.maxY; j++) {
-        console.log("cell selected");
         this.highlightedCells[i][j] = true;
       }
     }//PUSH BACK SELECTION CHANGE
@@ -1399,19 +471,61 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
           }
         },
         mouseClick: function(e: MouseEvent) {
-          console.log(that);
-          var cellX: number;
-          var cellY: number;
-          cellX = parseInt(<string>(<HTMLDivElement>e.target).dataset["cellx"]);
-          cellY = parseInt((<HTMLDivElement>e.target).dataset["celly"]);
-          if (!isNaN(cellX)) {
-            that.mouseDown = true;
-            if (!e.shiftKey) {
-              that.clearSelections();
-              that.focusCell(cellX, cellY);
+          if (e.target instanceof HTMLDivElement) {
+            var div = <HTMLDivElement>e.target;
+            var type = div.dataset["type"];
+            if (type === "cell") {
+              var cellX: number;
+              var cellY: number;
+              cellX = parseInt(<string>(<HTMLDivElement>e.target).dataset["cellx"]);
+              cellY = parseInt((<HTMLDivElement>e.target).dataset["celly"]);
+              that.mouseDown = true;
+              if (!e.shiftKey) {
+                that.clearSelections();
+                that.focusCell(cellX, cellY);
+              }
+              else {
+                that.mouseSelectRange(cellX, cellY);
+              }
+              
             }
-            else {
-              that.mouseSelectRange(cellX, cellY);
+            if (type === "label") {
+              var num = parseInt(div.dataset["num"]) - 1;
+              if (div.dataset["col"] === "true") {
+                if (!e.shiftKey) {
+                  that.focusCell(num, 0);
+                  that.minX = num;
+                  that.maxX = num;
+                  that.minY = 0;
+                  that.maxY = that.model.height - 1;
+                  that.selectArea();
+                }
+                else {
+                  that.minX = Math.min(num, that.focusedCellX);
+                  that.maxX = Math.max(num, that.focusedCellX);
+                  that.minY = 0;
+                  that.maxY = that.model.height - 1;
+                  that.selectArea();
+                }
+              }
+              else {
+                if (!e.shiftKey) {
+                  that.focusCell(0, num);
+                  that.minX = 0;
+                  that.maxX = that.model.width - 1;
+                  that.minY = num;
+                  that.maxY = num;
+                  that.selectArea();
+                }
+                else {
+                  that.minX = 0;
+                  that.maxX = that.model.width - 1;
+                  that.minY = Math.min(num, that.focusedCellY);
+                  that.maxY = Math.max(num, that.focusedCellY);
+                  that.selectArea();
+
+                }
+              }
             }
           }
         },
@@ -1427,7 +541,6 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
           cellX = parseInt((<HTMLDivElement>e.target).dataset["cellx"]);
           cellY = parseInt((<HTMLDivElement>e.target).dataset["celly"]);
           if (that.mouseDown && !isNaN(cellX)) {
-            console.log(cellX);
             that.mouseSelectRange(cellX, cellY);
           }
         },
@@ -1619,16 +732,17 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
 
     var eventGrabber = this.eventManager();
 
-    this.events = 
-    {
-      mousedown: eventGrabber.mouseClick,
-      mouseup: eventGrabber.mouseUp,
-      mousemove: eventGrabber.mouseMoved,
-      doubleclick: eventGrabber.doubleClick,
-      keypressed: eventGrabber.keyPressed,
-      copy: eventGrabber.copy,
-      paste: eventGrabber.paste
-    }
+    this.events = new SpreadsheetEventObject();
+
+    
+    this.events.mousedown = eventGrabber.mouseClick,
+    this.events.mouseup = eventGrabber.mouseUp,
+    this.events.mousemove = eventGrabber.mouseMoved,
+    this.events.doubleclick = eventGrabber.doubleClick,
+    this.events.keypressed = eventGrabber.keyPressed,
+    this.events.copy = eventGrabber.copy,
+    this.events.paste = eventGrabber.paste
+    
   }
 }
 
@@ -1636,6 +750,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
 
 class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
   public columnLabels: HTMLLabel[];
+  public mutableColVals: MutableNumber[];
+  public mutableRowVals: MutableNumber[];
   public rowLabels: HTMLLabel[];
   public cells: ICell[][];
   public mv: ISpreadsheetViewModel;
@@ -1648,8 +764,19 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     this.table = <HTMLTableElement>document.createElement("table");
     this.table.classList.add("spreadsheet");
 
-
+    this.mutableColVals = new Array();
+    this.mutableRowVals = new Array();
     this.cells = new Array();
+
+
+    for (var i = 0; i < this.mv.model.height; i++) {
+      this.mutableRowVals[i] = new MutableNumber(i);
+    }
+
+    for (var i = 0; i < this.mv.model.width; i++) {
+      this.mutableColVals[i] = new MutableNumber(i);
+    }
+
 
     for (var i = 0; i <= this.mv.model.height; i++) { //create height + 1 rows for labels and cells
       this.table.insertRow();
@@ -1660,11 +787,12 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
       for (var j = 0; j <= this.mv.model.width; j++) {
         var cell = <HTMLTableCellElement>row.insertCell();
         if (j > 0 && i > 0) {
-          this.cells[i - 1][j - 1] = new HTMLCell(this, i - 1, j - 1); //fill in later
+          this.cells[i - 1][j - 1] = new HTMLCell(this, this.mutableRowVals[i - 1], this.mutableColVals[j - 1]); //fill in later
           this.attachCell(this.cells[i - 1][j - 1]);
         }
       }
     }
+    console.log(this.cells);
 
     this.columnLabels = new Array();
     this.rowLabels = new Array();
@@ -1679,8 +807,6 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
       this.columnLabels[i] = new HTMLLabel(i, true, cell);
     }
     this.node.appendChild(this.table);
-
-    console.log(this.mv.events)
     if (this.mv.events.mousedown != undefined) {
       this.addCallback("mousedown", this.mv.events.mousedown, this.table);
     }
@@ -1704,18 +830,14 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
       addEventListener("selectionchanged", function(e: CustomEvent) {
         that.updateSelections();
 
-        console.log("selection changed");
-
       });
       //this.table.
       addEventListener("focuschanged", function(e: CustomEvent) {
-        console.log("got a focus change");
         that.updateFocus();
 
       });
       addEventListener("cellchanged", function(e: CustomEvent) {
-        that.cells[e.detail.celly][e.detail.cellx]._displayVal = that.mv.model.cellVals[e.detail.cellx][e.detail.celly];
-        console.log("got cell change");
+        that.cells[e.detail.celly][e.detail.cellx].setDisplayVal(that.mv.model.cellVals[e.detail.cellx][e.detail.celly]);
       });
 
       addEventListener("beginedits", function(e: CustomEvent) {
@@ -1735,7 +857,6 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
   }
 
   updateSelections() {
-    console.log(this.cells);
     for (var i = 0; i < this.cells.length; i++) {
       for (var j = 0; j < this.cells[0].length; j++) {
 
@@ -1751,12 +872,13 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
 
   updateFocus() {
     if (this.focusedCell != undefined) {
-      this.focusedCell.finishEdits();
+      this.focusedCell.endFocus();
       this.mv.editing = false;
-
     }
+    console.log(this.mv.focusedCellX);
+    console.log(this.mv.focusedCellY);
     this.focusedCell = this.cells[this.mv.focusedCellY][this.mv.focusedCellX];
-    this.focusedCell.beginEdits();
+    this.focusedCell.startFocus();
   }
 
   attachCell(cell: ICell) {
@@ -1765,53 +887,161 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     tableCell.appendChild(cell.getHTMLElement());
   }
   addCallback(event: string, callback: EventListener, to: HTMLElement) {
-    console.log("adding callback for " + event);
-    console.log(event);
-    console.log(callback);
     to.addEventListener(event, callback);
   }
   insertCol(colNum: number) {
     this.mv.model.insertCol(colNum);
     var row = <HTMLTableRowElement>this.table.rows[0];
     var cell = <HTMLTableCellElement>row.insertCell(colNum + 1);
-    this.columnLabels.push(new HTMLLabel(colNum + 1, true, cell));
+
+    this.columnLabels.splice(colNum, 0, new HTMLLabel(colNum + 1, true, cell));
+    this.mutableColVals.splice(colNum, 0, new MutableNumber(colNum));
+
+    console.log(this.mutableColVals[colNum]);
 
     for (var i = 0; i < this.mv.model.height; i++) {
       row = <HTMLTableRowElement>this.table.rows[i + 1];
       row.insertCell(colNum + 1);
-      this.cells[i].splice(colNum, 0, new HTMLCell(this, i, colNum));
+
+      this.cells[i].splice(colNum, 0, new HTMLCell(this, this.mutableRowVals[i], this.mutableColVals[colNum]));
       this.attachCell(this.cells[i][colNum]);
+    }
+
+    for (var j = colNum + 1; j < this.mv.model.width; j++) {
+      this.columnLabels[j].val++;
+      this.columnLabels[j].div.innerHTML = this.columnLabels[j].val.toString();
+      this.cells[0][j].setCol(this.cells[0][j].getCol() + 1);
+      this.mutableColVals[j].val++;
     }
     this.mv.insertCol(colNum);
   }
-  deleteCol(){
-    for (var i = 0; i < this.cells.length; i++) {
-      this.cells[i].splice(this.cells[i].length - 1, 1);
+  deleteCol(colNum: number){
+    this.mv.model.deleteCol(colNum);
+    this.columnLabels.splice(colNum, 1);
+    var row = <HTMLTableRowElement>this.table.rows[0];
+    row.deleteCell(colNum + 1);
+    for (var i = 0; i < this.mv.model.height; i++) {
+      row = <HTMLTableRowElement>this.table.rows[i + 1];
+      row.deleteCell(colNum + 1);
+      this.cells[i].splice(colNum, 1);
+      
+      this.cells[i][0].setCol(this.cells[i][0].getCol() - 1);
     }
+    for (var j = colNum; j < this.mv.model.width; j++) {
+      this.columnLabels[j].val--;
+      this.columnLabels[j].div.innerHTML = this.columnLabels[j].val.toString();
+    }
+    this.mv.deleteCol(colNum);
   }
   insertRow(rowNum: number) {
     this.mv.model.insertRow(rowNum);
+
     this.cells.splice(rowNum, 0, new Array());
+
     var row = <HTMLTableRowElement>this.table.insertRow(rowNum + 1);
     var label = <HTMLTableCellElement>row.insertCell();
-    this.rowLabels.push(new HTMLLabel(rowNum + 1, false, label));
+    this.rowLabels.splice(rowNum, 0, new HTMLLabel(rowNum + 1, false, label));
+
     for (var i = 0; i < this.mv.model.width; i++) {
       row.insertCell();
-      this.cells[rowNum][i] = new HTMLCell(this, rowNum, i);
+      this.cells[rowNum][i] = new HTMLCell(this, this.mutableRowVals[rowNum], this.mutableColVals[i]);
       this.attachCell(this.cells[rowNum][i]);
-      for (var j = rowNum + 1; j < this.mv.model.height; j++) {
-        if (i == 0) {
-          this.rowLabels[j].val++;
-        }
-        this.cells[j][i].setRow(this.cells[j][i].getRow() + 1);
 
-      }
+
+    }
+
+    for (var j = rowNum + 1; j < this.mv.model.height - 1; j++) { //all the rest of the cells
+      this.rowLabels[j + 1].val++;
+      this.rowLabels[j + 1].div.innerHTML = this.rowLabels[j].val.toString();
+      this.cells[j][0].setRow(this.cells[j][0].getRow() + 1);
     }
 
     this.mv.insertRow(rowNum);
   }
-  deleteRow() {
-    this.cells.splice(this.cells.length - 1, 1);
+  deleteRow(rowNum: number) {
+    this.mv.model.deleteRow(rowNum);
+    this.cells.splice(rowNum, 1);
+    this.table.deleteRow(rowNum + 1);
+    this.rowLabels.splice(rowNum, 1);
+    for (var i = 0; i < this.mv.model.width; i++) {
+      for (var j = rowNum; j < this.mv.model.height; j++) {
+        if (i == 0) {        
+          this.rowLabels[j].val--;
+          this.rowLabels[j].div.innerHTML = this.rowLabels[j].val.toString();
+        }
+      }
+      this.cells[0][i].setRow(this.cells[0][i].getRow() - 1);
+    }
+    this.mv.deleteRow(rowNum);
+  }
+  sortColAsc(col: number) {
+    this.sortByCol(col, true);
+  }
+  sortColDesc(col: number) {
+    this.sortByCol(col, false);
+  }
+
+  sortByCol(colNum: number, ascending: boolean): void {
+    var nums: number[] = [];
+    for (var i = 0; i < this.mv.model.height; i++) {
+      nums.push(i);
+    }
+    console.log(this.mv.model.cellVals[colNum])
+    if (ascending) {
+      nums = this.sortCol(nums, this.mv.model.cellVals[colNum]);
+    }
+    else {
+      nums = this.sortCol(nums, this.mv.model.cellVals[colNum], function(a: string, b: string) {
+        return b < a;
+      });
+    }
+    console.log(nums);
+    var newVals: string[][] = [];
+    for (var i = 0; i < this.mv.model.width; i++) {
+      newVals.push([]);
+    }
+    for (var i = 0; i < this.mv.model.height; i++) {
+      for (var j = 0; j < this.mv.model.width; j++) {
+        newVals[j][i] = this.mv.model.cellVals[j][nums[i]];
+      }
+    }
+    console.log(newVals);
+    this.mv.model.cellVals = newVals;
+    for (var i = 0; i < this.mv.model.width; i++) {
+      for (var j = 0; j < this.mv.model.height; j++) {
+        this.cells[j][i].setDisplayVal(this.mv.model.cellVals[i][j]);
+      }
+    }
+    console.log(this.mv.model.cellVals[colNum]);
+  }
+  protected sortCol(nums: number[], vals: string[], sorter?: (a: string, b: string) => boolean): number[] {
+    if (vals.length == 0) {
+      return nums;
+    }
+    if (!sorter) {
+      console.log("No sort function passed");
+      sorter = function(a: string, b: string) {
+        return a < b;
+      }
+    }
+    var leftVals: string[] = [];
+    var leftNums: number[] = [];
+    var rightVals: string[] = [];
+    var rightNums: number[] = [];
+    var pivot = vals[0];
+
+    for (var i = 1; i < vals.length; i++) {
+      if ((sorter(vals[i], pivot) || pivot == "") && vals[i] != "") {
+        leftVals.push(vals[i]);
+        leftNums.push(nums[i]);
+      }
+      else {
+        rightVals.push(vals[i]);
+        rightNums.push(nums[i]);
+      }
+    }
+    return this.sortCol(leftNums, leftVals, sorter).concat(nums[0])
+      .concat(this.sortCol(rightNums, rightVals, sorter));
   }
 
 
@@ -1837,19 +1067,19 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
         },
         delRow: () => {
           console.log("Delete row");
-          //view.deleteRow(view.mv.focusedCellY - 1);
+          view.deleteRow(view.mv.focusedCellY - 1);
         },
         delCol: () => {
           console.log("Delete col");
-          //view.deleteCol(view.mv.focusedCellX);
+          view.deleteCol(view.mv.focusedCellX);
         },
         sortColAsc: () => {
           console.log("Sort col asc");
-          //view.sortColAsc(view.mv.focusedCellX);
+          view.sortColAsc(view.mv.focusedCellX);
         },
         sortColDesc: () => {
           console.log("Sort col desc");
-          //view.sortColDesc(view.mv.focusedCellX);
+          view.sortColDesc(view.mv.focusedCellX);
         },
       };
       var rowBeforeItem = new MenuItem({
