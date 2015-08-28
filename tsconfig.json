@@ -2,5 +2,6 @@
 	"declarationFiles": false,
 	"noImplicitAny": true,
 	"target": "ES5",
-	"module": "amd"
+	"module": "commonjs",
+	"out": "spreadsheet.js"
 }
