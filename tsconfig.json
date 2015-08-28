@@ -1,0 +1,6 @@
+{
+	"declarationFiles": false,
+	"noImplicitAny": true,
+	"target": "ES5",
+	"module": "amd"
+}
