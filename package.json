@@ -9,22 +9,22 @@
     "url": "https://github.com/jupyter/spreadsheet.git"
   },
   "scripts": {
-    "postinstall": "gulp"
+    "prepublish": "npm run build",
+    "build": "tsc"
   },
   "devDependencies": {
-    "gulp": "^3.9.0",
-    "gulp-less": "^3.0.3",
-    "gulp-minify-css": "^1.1.6",
-    "gulp-rename": "^1.2.2",
-    "gulp-sourcemaps": "^1.5.2",
-    "gulp-util": "3.0.6",
-    "jupyter-notebook-deps": "git+https://github.com/jupyter/notebook.git",
-    "less": "~2",
-    "source-map": "^0.4.2",
+    "browserify": "^11.0.1",
+    "tsd": "^0.6.3",
     "typescript": "^1.5.3"
+  },
+  "optionalDependencies": {
+    "jupyter-notebook-deps": "git+https://github.com/jupyter/notebook.git"
+  },
+  "dependencies": {
+    "phosphor-widget": "git+https://github.com/phosphorjs/phosphor-widget.git"
   },
   "bugs": {
     "url": "https://github.com/jupyter/spreadsheet/issues"
   },
-  "main": "spreadsheet.js"
+  "main": "dist/spreadsheet.js"
 }

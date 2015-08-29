@@ -1,7 +1,26 @@
 {
-	"declarationFiles": false,
-	"noImplicitAny": true,
-	"target": "ES5",
-	"module": "commonjs",
-	"out": "spreadsheet.js"
+    "version": "1.5.0-beta",
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noLib": false,
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "out": "dist/spreadsheet.js",
+        "outDir": "dist/",
+        "sourceMap": true
+    },
+    "filesGlob": [
+        "./**/*.ts",
+        "!./node_modules/**/*.ts"
+    ],
+    "files": [
+        "./src/spreadsheet.ts",
+        "./typings/es6-promise/es6-promise.d.ts",
+        "./typings/tsd.d.ts"
+    ]
 }

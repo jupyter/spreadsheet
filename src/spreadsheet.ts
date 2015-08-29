@@ -1,8 +1,5 @@
-/// <reference path="./typings/tsd.d.ts" />
-/// <reference path="../phosphor/dist/phosphor.d.ts" />
-
-
-
+/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../bower_components/phosphor/dist/phosphor.d.ts" />
 
 import Orientation = phosphor.widgets.Orientation;
 import SizePolicy = phosphor.widgets.SizePolicy;
@@ -12,7 +9,7 @@ import Size = phosphor.utility.Size;
 import Menu = phosphor.widgets.Menu;
 import MenuBar = phosphor.widgets.MenuBar;
 import MenuItem = phosphor.widgets.MenuItem;
-//import KeyboardManager = require('jupyter-notebook-deps/notebook/static-src/base/js/keyboard');
+import KeyboardManager = require('');
 
 console.log("finished imports");
 
@@ -120,7 +117,7 @@ class HTMLLabel {
     newCell.appendChild(this.div);
     this.div.innerHTML = this.val.toString();
     this.div.setAttribute("data-type", "label");
-    this.div.setAttribute("data-col", isCol);
+    this.div.setAttribute("data-col", isCol.toString());
     this.div.setAttribute("data-num", val.toString());
   }
 }
@@ -891,7 +888,7 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     var tableCell = (<HTMLTableRowElement>this.table.rows[cell.getRow() + 1]).cells[cell.getCol() + 1];
     tableCell.appendChild(cell.getHTMLElement());
   }
-  addCallback(event: string, callback: EventListener, to: HTMLElement) {
+  addCallback(event: string, callback: EventListener, to: EventTarget) {
     to.addEventListener(event, callback);
   }
   insertCol(colNum: number) {
