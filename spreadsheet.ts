@@ -12,7 +12,7 @@ import Size = phosphor.utility.Size;
 import Menu = phosphor.widgets.Menu;
 import MenuBar = phosphor.widgets.MenuBar;
 import MenuItem = phosphor.widgets.MenuItem;
-import KeyboardManager = require('jupyter-notebook-deps/notebook/static-src/base/js/keyboard');
+//import KeyboardManager = require('jupyter-notebook-deps/notebook/static-src/base/js/keyboard');
 
 console.log("finished imports");
 
@@ -92,6 +92,14 @@ interface ICell {
   startFocus(): void;
   endFocus(): void;
   getHTMLElement(): HTMLElement;
+}
+
+function getCellX(cell: HTMLTableCellElement): number {
+  return cell.cellIndex - 1;
+}
+
+function getCellY(cell: HTMLTableCellElement): number {
+  return (<HTMLTableRowElement>cell.parentElement).rowIndex - 1;
 }
 
 class MutableNumber {
@@ -205,14 +213,12 @@ class HTMLCell implements ICell {
   }
   set col(newVal: number) {
     this._col.val = newVal;
-    this.div.setAttribute("data-cellX", this._col.val.toString());
   }
   get col() {
     return this._col.val;
   }
   set row(newVal: number) {
     this._row.val = newVal;
-    this.div.setAttribute("data-cellY", this._row.val.toString());
   }
   get row() {
     return this._row.val;
@@ -350,8 +356,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.mouseDown = true;
     var cellX: number;
     var cellY: number;
-    cellX = <number>parseInt(<string>(<HTMLDivElement>e.target).dataset["cellx"]);
-    cellY = <number>parseInt(<string>(<HTMLDivElement>e.target).dataset["celly"]);
+    cellX = getCellX(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
+    cellY = getCellY(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
     if (typeof cellX !== 'undefined') {
       this.mouseDown = true;
       if (!e.shiftKey) {
@@ -465,7 +471,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
       var that = this;
       return {
         doubleClick: function(e: MouseEvent) {
-          if ((<HTMLDivElement>e.target).dataset["cellx"] != undefined) {
+          if ((<HTMLDivElement>e.target).dataset["type"] == "cell") {
             console.log("doubleclick");
             that.beginEdits();
           }
@@ -477,8 +483,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
             if (type === "cell") {
               var cellX: number;
               var cellY: number;
-              cellX = parseInt(<string>(<HTMLDivElement>e.target).dataset["cellx"]);
-              cellY = parseInt((<HTMLDivElement>e.target).dataset["celly"]);
+              cellX = getCellX(<HTMLTableCellElement>div.parentElement);
+              cellY = getCellY(<HTMLTableCellElement>div.parentElement);
               that.mouseDown = true;
               if (!e.shiftKey) {
                 that.clearSelections();
@@ -535,12 +541,12 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
           that.mouseDown = false;
         },
         mouseMoved: function(e: MouseEvent) {
-
+          //FIX ME, I WILL BREAK WHEN NOT OVER A DIV!
           var cellX: number;
           var cellY: number;
-          cellX = parseInt((<HTMLDivElement>e.target).dataset["cellx"]);
-          cellY = parseInt((<HTMLDivElement>e.target).dataset["celly"]);
-          if (that.mouseDown && !isNaN(cellX)) {
+          cellX = getCellX(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
+          cellY = getCellY(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
+          if (that.mouseDown) {
             that.mouseSelectRange(cellX, cellY);
           }
         },
@@ -792,7 +798,6 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
         }
       }
     }
-    console.log(this.cells);
 
     this.columnLabels = new Array();
     this.rowLabels = new Array();
@@ -897,21 +902,16 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     this.columnLabels.splice(colNum, 0, new HTMLLabel(colNum + 1, true, cell));
     this.mutableColVals.splice(colNum, 0, new MutableNumber(colNum));
 
-    console.log(this.mutableColVals[colNum]);
-
     for (var i = 0; i < this.mv.model.height; i++) {
       row = <HTMLTableRowElement>this.table.rows[i + 1];
       row.insertCell(colNum + 1);
-
       this.cells[i].splice(colNum, 0, new HTMLCell(this, this.mutableRowVals[i], this.mutableColVals[colNum]));
       this.attachCell(this.cells[i][colNum]);
     }
 
-    for (var j = colNum + 1; j < this.mv.model.width; j++) {
-      this.columnLabels[j].val++;
+    for (var j = colNum + 2; j <= this.mv.model.width; j++) {
+      this.columnLabels[j].val++;;
       this.columnLabels[j].div.innerHTML = this.columnLabels[j].val.toString();
-      this.cells[0][j].setCol(this.cells[0][j].getCol() + 1);
-      this.mutableColVals[j].val++;
     }
     this.mv.insertCol(colNum);
   }
@@ -927,7 +927,7 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
       
       this.cells[i][0].setCol(this.cells[i][0].getCol() - 1);
     }
-    for (var j = colNum; j < this.mv.model.width; j++) {
+    for (var j = colNum + 1; j <= this.mv.model.width; j++) {
       this.columnLabels[j].val--;
       this.columnLabels[j].div.innerHTML = this.columnLabels[j].val.toString();
     }
@@ -937,34 +937,33 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     this.mv.model.insertRow(rowNum);
 
     this.cells.splice(rowNum, 0, new Array());
-
     var row = <HTMLTableRowElement>this.table.insertRow(rowNum + 1);
     var label = <HTMLTableCellElement>row.insertCell();
     this.rowLabels.splice(rowNum, 0, new HTMLLabel(rowNum + 1, false, label));
+    this.mutableRowVals.splice(rowNum, 0, new MutableNumber(rowNum));
 
     for (var i = 0; i < this.mv.model.width; i++) {
       row.insertCell();
       this.cells[rowNum][i] = new HTMLCell(this, this.mutableRowVals[rowNum], this.mutableColVals[i]);
       this.attachCell(this.cells[rowNum][i]);
-
-
     }
 
-    for (var j = rowNum + 1; j < this.mv.model.height - 1; j++) { //all the rest of the cells
-      this.rowLabels[j + 1].val++;
-      this.rowLabels[j + 1].div.innerHTML = this.rowLabels[j].val.toString();
+    for (var j = rowNum + 2; j <= this.mv.model.height; j++) { //all the rest of the cells
+      this.rowLabels[j].val++;
+      this.rowLabels[j].div.innerHTML = this.rowLabels[j].val.toString();
       this.cells[j][0].setRow(this.cells[j][0].getRow() + 1);
     }
 
     this.mv.insertRow(rowNum);
   }
   deleteRow(rowNum: number) {
+    console.log(rowNum);
     this.mv.model.deleteRow(rowNum);
     this.cells.splice(rowNum, 1);
     this.table.deleteRow(rowNum + 1);
     this.rowLabels.splice(rowNum, 1);
     for (var i = 0; i < this.mv.model.width; i++) {
-      for (var j = rowNum; j < this.mv.model.height; j++) {
+      for (var j = rowNum; j <= this.mv.model.height; j++) {
         if (i == 0) {        
           this.rowLabels[j].val--;
           this.rowLabels[j].div.innerHTML = this.rowLabels[j].val.toString();
@@ -1067,7 +1066,7 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
         },
         delRow: () => {
           console.log("Delete row");
-          view.deleteRow(view.mv.focusedCellY - 1);
+          view.deleteRow(view.mv.focusedCellY);
         },
         delCol: () => {
           console.log("Delete col");
