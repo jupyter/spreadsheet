@@ -26,5 +26,5 @@
   "bugs": {
     "url": "https://github.com/jupyter/spreadsheet/issues"
   },
-  "main": "dist/spreadsheet.js"
+  "main": "lib/spreadsheet.js"
 }
