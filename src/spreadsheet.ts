@@ -1,15 +1,12 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="../bower_components/phosphor/dist/phosphor.d.ts" />
 
-import Orientation = phosphor.widgets.Orientation;
-import SizePolicy = phosphor.widgets.SizePolicy;
 import Widget = phosphor.widgets.Widget;
-import SplitPanel = phosphor.widgets.SplitPanel;
-import Size = phosphor.utility.Size;
-import Menu = phosphor.widgets.Menu;
-import MenuBar = phosphor.widgets.MenuBar;
-import MenuItem = phosphor.widgets.MenuItem;
-import KeyboardManager = require('');
+import {
+IMessageHandler, Message, clearMessageData, postMessage, sendMessage
+} from 'phosphor-messaging';
+
+import {MenuBar, Menu, MenuItem} from 'phosphor-menus';
 
 console.log("finished imports");
 
@@ -25,6 +22,9 @@ interface ISpreadsheetModel {
   insertRow(rowNum: number): void;
   deleteRow(rowNum: number): void;
   clearCell(x: number, y: number): void;
+
+  processMessage(msg: Message): void;
+
 }
 interface ISpreadsheetViewModel {
   model: ISpreadsheetModel;
@@ -55,6 +55,8 @@ interface ISpreadsheetViewModel {
   focusChanged(): void;
   selectionChanged(): void;
 
+  processMessage(msg: Message): void;
+
 }
 
 interface ISpreadsheetView {
@@ -69,6 +71,8 @@ interface ISpreadsheetView {
   insertCol(colNum: number): void;
   insertRow(rowNum: number): void;
   createMenu(): void;
+  processMessage(msg: Message): void;
+
 }
 
 interface ICell {
@@ -99,12 +103,33 @@ function getCellY(cell: HTMLTableCellElement): number {
   return (<HTMLTableRowElement>cell.parentElement).rowIndex - 1;
 }
 
+class CellChangeMessage extends Message {
+  private _cellX: number;
+  private _cellY: number;
+  constructor(cellX: number, cellY: number) {
+    super("cellchanged");
+    this._cellX = cellX;
+    this._cellY = cellY;
+  }
+  get cellX(): number {
+    return this._cellX;
+  }
+  get cellY(): number {
+    return this._cellY;
+  }
+
+}
+
 class MutableNumber {
   public val: number;
   constructor(val: number) {
     this.val = val;
   }
 }
+
+const MSG_ON_FOCUS = new Message("focuschanged");
+const MSG_ON_SELECTION = new Message("selectionchanged");
+const MSG_ON_BEGIN_EDIT = new Message("beginedits");
 
 class HTMLLabel {
   public val: number;
@@ -237,6 +262,9 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
       }
     }
   }
+
+  processMessage(msg: Message) {}
+
   getCell(x: number, y: number): string {
     return this.cellVals[x][y];
   }
@@ -248,6 +276,9 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
       celly: y,
     }});
     dispatchEvent(event);
+
+    var msg = new CellChangeMessage(x, y);
+    sendMessage(this, msg);
   }
   insertCol(colNum: number) {
     this.cellVals.splice(colNum, 0, new Array());
@@ -430,14 +461,16 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
   }
 
   focusChanged() {
-    console.log("dispatching focus event");
     var event = new CustomEvent("focuschanged");
     dispatchEvent(event);
+    sendMessage(this, MSG_ON_FOCUS);
   }
 
   selectionChanged() {
     var event = new CustomEvent("selectionchanged");
     dispatchEvent(event);
+
+    sendMessage(this, MSG_ON_SELECTION)
   }
   beginEdits() {
     this.editing = true;
@@ -445,6 +478,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
 
     var event = new CustomEvent("beginedits");
     dispatchEvent(event);
+
+    sendMessage(this, MSG_ON_BEGIN_EDIT)
   }
 
 
@@ -541,10 +576,12 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
           //FIX ME, I WILL BREAK WHEN NOT OVER A DIV!
           var cellX: number;
           var cellY: number;
-          cellX = getCellX(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
-          cellY = getCellY(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
-          if (that.mouseDown) {
-            that.mouseSelectRange(cellX, cellY);
+          if ((<HTMLElement>e.target).nodeName == "DIV") {
+            cellX = getCellX(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
+            cellY = getCellY(<HTMLTableCellElement>(<HTMLDivElement>e.target).parentElement);
+            if (that.mouseDown) {
+              that.mouseSelectRange(cellX, cellY);
+            }
           }
         },
 
@@ -747,6 +784,11 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.events.paste = eventGrabber.paste
     
   }
+
+  processMessage(msg: Message):void {
+    console.log("mv");
+    console.log(msg);
+  }
 }
 
 
@@ -856,6 +898,10 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
 
     })(this);
     this.createMenu();
+  }
+
+  processMessage(msg: Message) {
+    console.log(msg);
   }
 
   updateSelections() {
@@ -1111,16 +1157,18 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
         className: 'sortDescCol'
       });
 
-      rowBeforeItem.triggered.connect(handler.rowBefore);
-      rowAfterItem.triggered.connect(handler.rowAfter);
-      colBeforeItem.triggered.connect(handler.colBefore);
-      colAfterItem.triggered.connect(handler.colAfter);
-      delRowItem.triggered.connect(handler.delRow);
-      delColItem.triggered.connect(handler.delCol);
-      sortColAscItem.triggered.connect(handler.sortColAsc);
-      sortColDescItem.triggered.connect(handler.sortColDesc);
+      rowBeforeItem.handler = handler.rowBefore;
+      rowAfterItem.handler = handler.rowAfter;
+      colBeforeItem.handler = handler.colBefore;
+      colAfterItem.handler = handler.colAfter;
+      delRowItem.handler = handler.delRow;
+      delColItem.handler = handler.delCol;
+      sortColAscItem.handler = handler.sortColAsc;
+      sortColDescItem.handler = handler.sortColDesc;
 
-      var rightClickMenu = new Menu([
+      var rightClickMenu = new Menu();
+
+      rightClickMenu.items = [
         rowBeforeItem,
         rowAfterItem,
         colBeforeItem,
@@ -1128,13 +1176,13 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
         delRowItem,
         delColItem,
         sortColAscItem,
-        sortColDescItem]);
-          document.addEventListener('contextmenu', function(event) {
-              event.preventDefault();
-              var x = event.clientX;
-              var y = event.clientY;
-              rightClickMenu.popup(x, y);
-          });
+        sortColDescItem];
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            var x = event.clientX;
+            var y = event.clientY;
+            rightClickMenu.popup(x, y);
+        });
     })(this);
   }
 
@@ -1162,6 +1210,8 @@ function setup(): void {
 
   //window.onresize = () => spreadsheet.fit();
   window.onresize = () => spreadsheet2.fit();
+
+  console.log("blahh");
 }
 
 window.onload = main;
