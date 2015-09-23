@@ -10,13 +10,12 @@
   },
   "scripts": {
     "prepublish": "npm run build",
-    "build": "npm run build:ts && npm run build:es5 && npm run build:browser",
-    "build:ts": "tsc --project .",
-    "build:es5": "babel dist/spreadsheet.js --out-file lib/spreadsheet.js",
-    "build:browser": "browserify -g browserify-css lib/spreadsheet.js --outfile dist/spreadsheet.js --debug"
+    "build": "npm run build:ts && npm run build:browser",
+    "build:ts": "tsc --project src",
+    "build:browser": "browserify -t browserify-css lib/spreadsheet.js --outfile lib/bundle.js --debug",
+    "postinstall": "npm dedupe"
   },
   "devDependencies": {
-    "babel": "^5.8.20",
     "browserify": "^11.0.1",
     "browserify-css": "^0.7.1",
     "tsd": "^0.6.3",

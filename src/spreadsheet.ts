@@ -1,14 +1,16 @@
 /// <reference path="../typings/tsd.d.ts" />
-/// <reference path="../bower_components/phosphor/dist/phosphor.d.ts" />
 
-import Widget = phosphor.widgets.Widget;
 import {
-IMessageHandler, Message, clearMessageData, postMessage, sendMessage
+  IMessageHandler, Message, clearMessageData, postMessage, sendMessage
 } from 'phosphor-messaging';
 
-import {MenuBar, Menu, MenuItem} from 'phosphor-menus';
+import {
+ Menu,  MenuBar, MenuItem
+} from 'phosphor-menus';
 
-console.log("finished imports");
+import {
+  Widget, attachWidget
+} from 'phosphor-widget';
 
 
 interface ISpreadsheetModel {
@@ -22,10 +24,10 @@ interface ISpreadsheetModel {
   insertRow(rowNum: number): void;
   deleteRow(rowNum: number): void;
   clearCell(x: number, y: number): void;
-
   processMessage(msg: Message): void;
-
 }
+
+
 interface ISpreadsheetViewModel {
   model: ISpreadsheetModel;
   highlightedCells: boolean[][];
@@ -40,7 +42,6 @@ interface ISpreadsheetViewModel {
   maxY: number;
   events: SpreadsheetEventObject;
   eventManager: any;
-
   insertRow(rowNum: number): void;
   insertCol(colNum: number): void;
   deleteRow(rowNum: number): void;
@@ -54,16 +55,14 @@ interface ISpreadsheetViewModel {
   selectArea(): void;
   focusChanged(): void;
   selectionChanged(): void;
-
   processMessage(msg: Message): void;
-
 }
+
 
 interface ISpreadsheetView {
   cells: ICell[][];
   mv: ISpreadsheetViewModel;
   focusedCell: ICell;
-
   updateSelections(): void;
   updateFocus(): void;
   attachCell(cell: HTMLCell): void;
@@ -72,8 +71,8 @@ interface ISpreadsheetView {
   insertRow(rowNum: number): void;
   createMenu(): void;
   processMessage(msg: Message): void;
-
 }
+
 
 interface ICell {
   _row: MutableNumber;
@@ -95,13 +94,16 @@ interface ICell {
   getHTMLElement(): HTMLElement;
 }
 
+
 function getCellX(cell: HTMLTableCellElement): number {
   return cell.cellIndex - 1;
 }
 
+
 function getCellY(cell: HTMLTableCellElement): number {
   return (<HTMLTableRowElement>cell.parentElement).rowIndex - 1;
 }
+
 
 class CellChangeMessage extends Message {
   private _cellX: number;
@@ -117,8 +119,8 @@ class CellChangeMessage extends Message {
   get cellY(): number {
     return this._cellY;
   }
-
 }
+
 
 class MutableNumber {
   public val: number;
@@ -127,9 +129,11 @@ class MutableNumber {
   }
 }
 
+
 const MSG_ON_FOCUS = new Message("focuschanged");
 const MSG_ON_SELECTION = new Message("selectionchanged");
 const MSG_ON_BEGIN_EDIT = new Message("beginedits");
+
 
 class HTMLLabel {
   public val: number;
@@ -147,20 +151,22 @@ class HTMLLabel {
   }
 }
 
+
 class SpreadsheetEventObject {
   public mousedown: (e: MouseEvent) => void;
   public mouseup: (e: MouseEvent) => void;
   public mousemove: (e: MouseEvent) => void;
   public doubleclick: (e: MouseEvent) => void;
   public keypressed: (e: KeyboardEvent) => void;
-  public copy: (e: ClipboardEvent) => void;  
-  public paste: (e: ClipboardEvent) => void;  
+  public copy: (e: ClipboardEvent) => void;
+  public paste: (e: ClipboardEvent) => void;
 }
+
 
 class HTMLCell implements ICell {
   public _row: MutableNumber;
   public _col: MutableNumber;
-  public _displayVal: string;  
+  public _displayVal: string;
   public parent: ISpreadsheetView;
   public div: HTMLDivElement;
   constructor(parent: ISpreadsheetView, mutableRow: MutableNumber, mutableCol: MutableNumber) {
@@ -247,6 +253,7 @@ class HTMLCell implements ICell {
   }
 }
 
+
 class HTMLSpreadsheetModel implements ISpreadsheetModel {
   public cellVals: string[][];
   public width: number;
@@ -287,7 +294,7 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
     }
     this.width++;
   }
-  
+
   deleteCol(colNum: number) {
     this.cellVals.splice(colNum, 1);
     this.width--;
@@ -310,6 +317,7 @@ class HTMLSpreadsheetModel implements ISpreadsheetModel {
     this.setCell(x, y, "");
   }
 }
+
 
 class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
   public model: ISpreadsheetModel;
@@ -435,7 +443,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.highlightedCells[cellX][cellY] = true;
     this.selectionChanged();
     //THROW BACK SELECTION CHANGED EVENT
-  } 
+  }
 
   mouseSelectRange(cellX: number, cellY: number) {
     if(cellX == this.focusedCellX && cellY == this.focusedCellY) {
@@ -525,7 +533,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
               else {
                 that.mouseSelectRange(cellX, cellY);
               }
-              
+
             }
             if (type === "label") {
               var num = parseInt(div.dataset["num"]) - 1;
@@ -617,7 +625,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
             for (var i = 0; i < lines.length; i++) {
               var cells = lines[i].split("\t");
               for (var j = 0; j < maxW; j++) {
-                if (that.minX + j <= that.model.width 
+                if (that.minX + j <= that.model.width
                   && that.minY + i <= that.model.height) {
                   if (typeof cells[j] !== 'undefined') {
                     that.model.setCell(that.minX + j, that.minY + i, cells[j]);
@@ -637,7 +645,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
         },
 
         keyPressed: function(e: KeyboardEvent) {
-          console.log(e); 
+          console.log(e);
           switch (e.keyCode) {
 
             case 13: //enter
@@ -762,7 +770,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
                 console.log(e.keyCode);
                 that.clearCell(that.focusedCellX, that.focusedCellY);
                 that.beginEdits();
-              
+
             }
           }
         }
@@ -774,7 +782,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
 
     this.events = new SpreadsheetEventObject();
 
-    
+
     this.events.mousedown = eventGrabber.mouseClick,
     this.events.mouseup = eventGrabber.mouseUp,
     this.events.mousemove = eventGrabber.mouseMoved,
@@ -782,7 +790,7 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.events.keypressed = eventGrabber.keyPressed,
     this.events.copy = eventGrabber.copy,
     this.events.paste = eventGrabber.paste
-    
+
   }
 
   processMessage(msg: Message):void {
@@ -790,7 +798,6 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     console.log(msg);
   }
 }
-
 
 
 class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
@@ -967,7 +974,7 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
       row = <HTMLTableRowElement>this.table.rows[i + 1];
       row.deleteCell(colNum + 1);
       this.cells[i].splice(colNum, 1);
-      
+
       this.cells[i][0].setCol(this.cells[i][0].getCol() - 1);
     }
     for (var j = colNum + 1; j <= this.mv.model.width; j++) {
@@ -1007,7 +1014,7 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
     this.rowLabels.splice(rowNum, 1);
     for (var i = 0; i < this.mv.model.width; i++) {
       for (var j = rowNum; j <= this.mv.model.height; j++) {
-        if (i == 0) {        
+        if (i == 0) {
           this.rowLabels[j].val--;
           this.rowLabels[j].div.innerHTML = this.rowLabels[j].val.toString();
         }
@@ -1189,29 +1196,30 @@ class HTMLSpreadsheetView extends Widget implements ISpreadsheetView {
 }
 
 
-
-
 function main() {
   setup();
 }
+
 
 function setup(): void {
   //var spreadsheet = new Spreadsheet(27, 60);
 
   var spreadsheet2 = new HTMLSpreadsheetView(new HTMLSpreadsheetViewModel(new HTMLSpreadsheetModel(27, 60)));
   spreadsheet2.addClass("scroll");
-  spreadsheet2.attach(document.getElementById('main'));
-  
+
+  attachWidget(spreadsheet2, document.getElementById('main'));
+
   //spreadsheet.attach(document.getElementById('main'));
   //spCol.horizontalSizePolicy = SizePolicy.Fixed;
 
   //spreadsheet.fit();
-  spreadsheet2.fit();
+  //spreadsheet2.fit();
 
   //window.onresize = () => spreadsheet.fit();
-  window.onresize = () => spreadsheet2.fit();
+  window.onresize = () => spreadsheet2.update();
 
   console.log("blahh");
 }
+
 
 window.onload = main;

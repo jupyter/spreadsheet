@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "experimentalDecorators": true,
         "declaration": true,
         "noImplicitAny": true,
         "noEmitOnError": true,
@@ -8,7 +7,6 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "target": "ES5",
-        "outDir": "./dist"
-    },
-    "files": ["src/spreadsheet.ts"]
+        "outDir": "../lib"
+    }
 }
