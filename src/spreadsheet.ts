@@ -12,6 +12,10 @@ import {
   Widget, attachWidget
 } from 'phosphor-widget';
 
+import { 
+  ISignal, Signal 
+} from 'phosphor-signaling';
+
 
 interface ISpreadsheetModel {
   cellVals: string[][];
@@ -337,6 +341,10 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
 
   public eventManager: any;
 
+  static selectionChangedSignal = new Signal<HTMLSpreadsheetViewModel, number>(); //should not be number
+  static focusChangedSignal = new Signal<HTMLSpreadsheetViewModel, ICell>();
+  static editingChangedSignal = new Signal<HTMLSpreadsheetViewModel, boolean>();
+
   insertRow(rowNum: number) {
     this.minX = 0;
     this.maxX = this.model.width - 1;
@@ -468,10 +476,21 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     this.selectionChanged();
   }
 
+  get selectionChanged(): ISignal<HTMLSpreadsheetViewModel, number> {
+    return HTMLSpreadsheetViewModel.selectionChangedSignal.bind(this);
+  }
+  get focusChanged(): ISignal<HTMLSpreadsheetViewModel, ICell> {
+    return HTMLSpreadsheetViewModel.focusChangedSignal.bind(this);
+  }
+  get editingChanged(): ISignal<HTMLSpreadsheetViewModel, boolean> {
+    return HTMLSpreadsheetViewModel.editingChangedSignal.bind(this);
+  }
+
   focusChanged() {
     var event = new CustomEvent("focuschanged");
     dispatchEvent(event);
     sendMessage(this, MSG_ON_FOCUS);
+    this.focusChanged.emit(this.focusedCell);
   }
 
   selectionChanged() {
@@ -479,6 +498,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     dispatchEvent(event);
 
     sendMessage(this, MSG_ON_SELECTION)
+
+    this.selectionChanged.emit(0)
   }
   beginEdits() {
     this.editing = true;
@@ -488,6 +509,8 @@ class HTMLSpreadsheetViewModel implements ISpreadsheetViewModel{
     dispatchEvent(event);
 
     sendMessage(this, MSG_ON_BEGIN_EDIT)
+
+    this.editingChanged.emit(true);
   }
 
 
@@ -1217,8 +1240,6 @@ function setup(): void {
 
   //window.onresize = () => spreadsheet.fit();
   window.onresize = () => spreadsheet2.update();
-
-  console.log("blahh");
 }
 
 

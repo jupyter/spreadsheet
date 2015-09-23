@@ -24,6 +24,7 @@
   "dependencies": {
     "phosphor-menus": "^0.9.4",
     "phosphor-messaging": "^1.0.4",
+    "phosphor-signaling": "^1.1.1",
     "phosphor-widget": "^0.9.9"
   },
   "bugs": {
